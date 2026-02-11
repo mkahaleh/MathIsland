@@ -51,7 +51,7 @@ class UIManager {
             const card = document.createElement('div');
             card.className = `character-card ${char.unlocked ? '' : 'locked'}`;
             card.style.background = `linear-gradient(180deg, ${char.bgGradient[0]}, ${char.bgGradient[1]})`;
-            card.setAttribute('tabindex', '0');
+            card.setAttribute('tabindex', char.unlocked ? '0' : '-1');
             card.setAttribute('data-char-id', char.id);
             card.setAttribute('data-index', index);
 
@@ -68,8 +68,13 @@ class UIManager {
     }
 
     _onCharacterFocus(index) {
-        this.selectedCharIndex = index;
         const char = Characters.roster[index];
+        if (!char) return;
+
+        // Only update selection for unlocked characters
+        if (char.unlocked) {
+            this.selectedCharIndex = index;
+        }
 
         document.getElementById('char-name').textContent = char.name;
         document.getElementById('char-desc').textContent =
@@ -100,8 +105,15 @@ class UIManager {
     }
 
     confirmCharacter() {
-        const char = Characters.roster[this.selectedCharIndex];
-        if (!char || !char.unlocked) return false;
+        let char = Characters.roster[this.selectedCharIndex];
+
+        // Fallback: if selected character is locked or invalid, pick first unlocked
+        if (!char || !char.unlocked) {
+            const fallbackIndex = Characters.roster.findIndex(c => c.unlocked);
+            if (fallbackIndex === -1) return false;
+            this.selectedCharIndex = fallbackIndex;
+            char = Characters.roster[fallbackIndex];
+        }
 
         this.game.selectCharacter(char.id);
         return true;
