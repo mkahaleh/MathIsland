@@ -44,6 +44,24 @@
             continueBtn.style.display = hasProgress ? 'flex' : 'none';
         }
 
+        // Handle logo image on start screen
+        const logoImg = document.getElementById('game-logo');
+        const mainMenu = document.getElementById('main-menu');
+        if (logoImg) {
+            logoImg.addEventListener('load', () => {
+                // Logo loaded successfully - add class to restyle title as subtitle
+                mainMenu.classList.add('has-logo');
+                console.log('Logo loaded successfully');
+            });
+            logoImg.addEventListener('error', () => {
+                // Logo failed to load - hide logo container, show full text title
+                const logoContainer = logoImg.closest('.logo-container');
+                if (logoContainer) logoContainer.classList.add('hidden');
+                mainMenu.classList.remove('has-logo');
+                console.log('Logo not found, using text title');
+            });
+        }
+
         // Focus play button
         setTimeout(() => {
             const playBtn = document.querySelector('.btn-play');
