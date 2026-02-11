@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=1920, height=1080, initial-scale=1.0">
+    <title>Math Island Adventure</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div id="game-container">
+        <canvas id="game-canvas" width="1920" height="1080"></canvas>
+        <div id="ui-overlay">
+            <!-- Main Menu -->
+            <div id="main-menu" class="screen active">
+                <div class="menu-bg"></div>
+                <div class="title-container">
+                    <h1 class="game-title">
+                        <span class="title-math">Math</span>
+                        <span class="title-island">Island</span>
+                        <span class="title-adventure">Adventure</span>
+                    </h1>
+                    <div class="title-stars"></div>
+                </div>
+                <div class="menu-buttons">
+                    <button class="menu-btn btn-play" data-action="play" autofocus>
+                        <span class="btn-icon">🏝️</span>
+                        <span class="btn-text">Start Adventure</span>
+                    </button>
+                    <button class="menu-btn btn-continue" data-action="continue">
+                        <span class="btn-icon">📖</span>
+                        <span class="btn-text">Continue</span>
+                    </button>
+                    <button class="menu-btn btn-settings" data-action="settings">
+                        <span class="btn-icon">⚙️</span>
+                        <span class="btn-text">Settings</span>
+                    </button>
+                </div>
+                <div class="menu-characters"></div>
+            </div>
+
+            <!-- Character Select -->
+            <div id="character-select" class="screen">
+                <h2 class="screen-title">Choose Your Explorer!</h2>
+                <div class="character-grid" id="character-grid"></div>
+                <div class="character-info" id="character-info">
+                    <span class="char-name" id="char-name"></span>
+                    <span class="char-desc" id="char-desc"></span>
+                </div>
+                <div class="select-actions">
+                    <button class="menu-btn btn-back" data-action="back-to-menu">Back</button>
+                    <button class="menu-btn btn-confirm" data-action="confirm-character">Let's Go!</button>
+                </div>
+            </div>
+
+            <!-- Level Select / Island Map -->
+            <div id="level-select" class="screen">
+                <h2 class="screen-title">Math Island Map</h2>
+                <div class="island-map" id="island-map"></div>
+                <div class="level-info" id="level-info"></div>
+                <div class="select-actions">
+                    <button class="menu-btn btn-back" data-action="back-to-characters">Back</button>
+                </div>
+            </div>
+
+            <!-- Game HUD -->
+            <div id="game-hud" class="screen">
+                <div class="hud-top">
+                    <div class="hud-level">
+                        <span class="hud-label">Level</span>
+                        <span class="hud-value" id="hud-level">1</span>
+                    </div>
+                    <div class="hud-score">
+                        <span class="hud-label">Score</span>
+                        <span class="hud-value" id="hud-score">0</span>
+                    </div>
+                    <div class="hud-stars">
+                        <span id="hud-star-1" class="star">★</span>
+                        <span id="hud-star-2" class="star">★</span>
+                        <span id="hud-star-3" class="star">★</span>
+                    </div>
+                    <div class="hud-streak">
+                        <span class="hud-label">Streak</span>
+                        <span class="hud-value" id="hud-streak">0</span>
+                        <span class="streak-fire" id="streak-fire">🔥</span>
+                    </div>
+                    <div class="hud-timer">
+                        <div class="timer-bar" id="timer-bar"></div>
+                    </div>
+                </div>
+
+                <!-- Math Problem Display -->
+                <div class="problem-container" id="problem-container">
+                    <div class="problem-character" id="problem-character"></div>
+                    <div class="problem-bubble">
+                        <div class="problem-text" id="problem-text"></div>
+                        <div class="answer-options" id="answer-options"></div>
+                    </div>
+                </div>
+
+                <!-- Feedback Overlay -->
+                <div class="feedback-overlay" id="feedback-overlay">
+                    <div class="feedback-content" id="feedback-content"></div>
+                </div>
+            </div>
+
+            <!-- Level Complete -->
+            <div id="level-complete" class="screen">
+                <div class="complete-container">
+                    <h2 class="complete-title" id="complete-title">Level Complete!</h2>
+                    <div class="complete-stars" id="complete-stars"></div>
+                    <div class="complete-stats">
+                        <div class="stat">
+                            <span class="stat-label">Score</span>
+                            <span class="stat-value" id="complete-score">0</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-label">Correct</span>
+                            <span class="stat-value" id="complete-correct">0/0</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-label">Best Streak</span>
+                            <span class="stat-value" id="complete-streak">0</span>
+                        </div>
+                    </div>
+                    <div class="complete-reward" id="complete-reward"></div>
+                    <div class="complete-actions">
+                        <button class="menu-btn btn-replay" data-action="replay">Play Again</button>
+                        <button class="menu-btn btn-next" data-action="next-level">Next Level</button>
+                        <button class="menu-btn btn-map" data-action="back-to-map">Island Map</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings -->
+            <div id="settings-screen" class="screen">
+                <h2 class="screen-title">Settings</h2>
+                <div class="settings-container">
+                    <div class="setting-row">
+                        <span class="setting-label">Sound Effects</span>
+                        <button class="toggle-btn active" id="toggle-sfx" data-setting="sfx">ON</button>
+                    </div>
+                    <div class="setting-row">
+                        <span class="setting-label">Music</span>
+                        <button class="toggle-btn active" id="toggle-music" data-setting="music">ON</button>
+                    </div>
+                    <div class="setting-row">
+                        <span class="setting-label">Difficulty</span>
+                        <div class="difficulty-select">
+                            <button class="diff-btn" data-diff="easy">Easy</button>
+                            <button class="diff-btn active" data-diff="normal">Normal</button>
+                            <button class="diff-btn" data-diff="hard">Hard</button>
+                        </div>
+                    </div>
+                    <div class="setting-row">
+                        <span class="setting-label">Timer</span>
+                        <button class="toggle-btn active" id="toggle-timer" data-setting="timer">ON</button>
+                    </div>
+                </div>
+                <button class="menu-btn btn-back" data-action="back-to-menu">Back</button>
+            </div>
+
+            <!-- Particle Canvas -->
+            <canvas id="particle-canvas" width="1920" height="1080"></canvas>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/utils.js"></script>
+    <script src="js/audio.js"></script>
+    <script src="js/particles.js"></script>
+    <script src="js/characters.js"></script>
+    <script src="js/math-engine.js"></script>
+    <script src="js/levels.js"></script>
+    <script src="js/island-renderer.js"></script>
+    <script src="js/game-engine.js"></script>
+    <script src="js/ui-manager.js"></script>
+    <script src="js/input-handler.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>

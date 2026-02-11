@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<TizenProject>
+    <Platform>
+        <Name>tv-samsung-5.0</Name>
+    </Platform>
+    <Package>
+        <Type>Web</Type>
+    </Package>
+</TizenProject>
