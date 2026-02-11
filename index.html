@@ -34,12 +34,36 @@
                         <span class="btn-icon">📖</span>
                         <span class="btn-text">Continue</span>
                     </button>
+                    <button class="menu-btn btn-achievements" data-action="achievements">
+                        <span class="btn-icon">🏆</span>
+                        <span class="btn-text">Achievements</span>
+                    </button>
                     <button class="menu-btn btn-settings" data-action="settings">
                         <span class="btn-icon">⚙️</span>
                         <span class="btn-text">Settings</span>
                     </button>
                 </div>
+                <div class="menu-stats" id="menu-stats">
+                    <span class="menu-stat">⭐ <span id="menu-total-stars">0</span></span>
+                    <span class="menu-stat">📊 <span id="menu-levels-done">0</span>/30</span>
+                </div>
                 <div class="menu-characters"></div>
+            </div>
+
+            <!-- Tutorial / Onboarding -->
+            <div id="tutorial-screen" class="screen">
+                <div class="tutorial-container">
+                    <div class="tutorial-page" id="tutorial-page">
+                        <div class="tutorial-emoji" id="tutorial-emoji">🏝️</div>
+                        <h2 class="tutorial-title" id="tutorial-title">Welcome to Math Island!</h2>
+                        <p class="tutorial-text" id="tutorial-text">Explore magical islands while solving math puzzles. Each island has unique challenges!</p>
+                    </div>
+                    <div class="tutorial-dots" id="tutorial-dots"></div>
+                    <div class="tutorial-actions">
+                        <button class="menu-btn btn-back tutorial-skip" data-action="skip-tutorial">Skip</button>
+                        <button class="menu-btn btn-play tutorial-next" data-action="next-tutorial">Next</button>
+                    </div>
+                </div>
             </div>
 
             <!-- Character Select -->
@@ -49,6 +73,7 @@
                 <div class="character-info" id="character-info">
                     <span class="char-name" id="char-name"></span>
                     <span class="char-desc" id="char-desc"></span>
+                    <span class="char-bonus" id="char-bonus"></span>
                 </div>
                 <div class="select-actions">
                     <button class="menu-btn btn-back" data-action="back-to-menu">Back</button>
@@ -58,7 +83,10 @@
 
             <!-- Level Select / Island Map -->
             <div id="level-select" class="screen">
-                <h2 class="screen-title">Math Island Map</h2>
+                <div class="map-header">
+                    <h2 class="screen-title">Math Island Map</h2>
+                    <div class="map-star-count">⭐ <span id="map-stars">0</span> / 90</div>
+                </div>
                 <div class="island-map" id="island-map"></div>
                 <div class="level-info" id="level-info"></div>
                 <div class="select-actions">
@@ -73,9 +101,16 @@
                         <span class="hud-label">Level</span>
                         <span class="hud-value" id="hud-level">1</span>
                     </div>
+                    <div class="hud-progress">
+                        <span class="hud-label">Progress</span>
+                        <div class="progress-bar-container">
+                            <div class="progress-bar" id="progress-bar"></div>
+                            <span class="progress-text" id="progress-text">1/10</span>
+                        </div>
+                    </div>
                     <div class="hud-score">
                         <span class="hud-label">Score</span>
-                        <span class="hud-value" id="hud-score">0</span>
+                        <span class="hud-value score-value" id="hud-score">0</span>
                     </div>
                     <div class="hud-stars">
                         <span id="hud-star-1" class="star">★</span>
@@ -90,20 +125,71 @@
                     <div class="hud-timer">
                         <div class="timer-bar" id="timer-bar"></div>
                     </div>
+                    <button class="hud-btn hud-hint-btn" id="hud-hint" data-action="use-hint" style="display:none">
+                        💡 Hint
+                    </button>
+                    <button class="hud-btn hud-pause-btn" id="hud-pause" data-action="pause-game">
+                        ⏸️
+                    </button>
+                </div>
+
+                <!-- Character Power Indicator -->
+                <div class="power-indicator" id="power-indicator" style="display:none">
+                    <span class="power-icon" id="power-icon"></span>
+                    <span class="power-text" id="power-text"></span>
                 </div>
 
                 <!-- Math Problem Display -->
                 <div class="problem-container" id="problem-container">
                     <div class="problem-character" id="problem-character"></div>
                     <div class="problem-bubble">
+                        <div class="problem-number" id="problem-number">Question 1</div>
                         <div class="problem-text" id="problem-text"></div>
                         <div class="answer-options" id="answer-options"></div>
+                        <!-- Proximity indicator for Byte -->
+                        <div class="proximity-bar" id="proximity-bar" style="display:none">
+                            <span class="proximity-label">Getting warmer...</span>
+                            <div class="proximity-fill" id="proximity-fill"></div>
+                        </div>
                     </div>
                 </div>
 
                 <!-- Feedback Overlay -->
                 <div class="feedback-overlay" id="feedback-overlay">
                     <div class="feedback-content" id="feedback-content"></div>
+                    <div class="feedback-points" id="feedback-points"></div>
+                </div>
+
+                <!-- Combo Display -->
+                <div class="combo-display" id="combo-display" style="display:none">
+                    <span class="combo-count" id="combo-count">3</span>
+                    <span class="combo-text">COMBO!</span>
+                </div>
+            </div>
+
+            <!-- Pause Menu -->
+            <div id="pause-menu" class="screen">
+                <div class="pause-overlay"></div>
+                <div class="pause-container">
+                    <h2 class="pause-title">⏸️ Paused</h2>
+                    <div class="pause-stats">
+                        <span>Score: <strong id="pause-score">0</strong></span>
+                        <span>Streak: <strong id="pause-streak">0</strong></span>
+                    </div>
+                    <div class="pause-buttons">
+                        <button class="menu-btn btn-play" data-action="resume-game">
+                            <span class="btn-icon">▶️</span>
+                            <span class="btn-text">Resume</span>
+                        </button>
+                        <button class="menu-btn btn-settings" data-action="pause-settings">
+                            <span class="btn-icon">⚙️</span>
+                            <span class="btn-text">Settings</span>
+                        </button>
+                        <button class="menu-btn btn-back" data-action="quit-to-map">
+                            <span class="btn-icon">🗺️</span>
+                            <span class="btn-text">Quit to Map</span>
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -114,19 +200,29 @@
                     <div class="complete-stars" id="complete-stars"></div>
                     <div class="complete-stats">
                         <div class="stat">
-                            <span class="stat-label">Score</span>
+                            <span class="stat-icon">🎯</span>
                             <span class="stat-value" id="complete-score">0</span>
+                            <span class="stat-label">Score</span>
                         </div>
                         <div class="stat">
-                            <span class="stat-label">Correct</span>
+                            <span class="stat-icon">✅</span>
                             <span class="stat-value" id="complete-correct">0/0</span>
+                            <span class="stat-label">Correct</span>
                         </div>
                         <div class="stat">
-                            <span class="stat-label">Best Streak</span>
+                            <span class="stat-icon">🔥</span>
                             <span class="stat-value" id="complete-streak">0</span>
+                            <span class="stat-label">Best Streak</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-icon">⏱️</span>
+                            <span class="stat-value" id="complete-time">0s</span>
+                            <span class="stat-label">Avg Time</span>
                         </div>
                     </div>
+                    <div class="complete-xp" id="complete-xp"></div>
                     <div class="complete-reward" id="complete-reward"></div>
+                    <div class="complete-achievement" id="complete-achievement"></div>
                     <div class="complete-actions">
                         <button class="menu-btn btn-replay" data-action="replay">Play Again</button>
                         <button class="menu-btn btn-next" data-action="next-level">Next Level</button>
@@ -135,20 +231,30 @@
                 </div>
             </div>
 
+            <!-- Achievements Screen -->
+            <div id="achievements-screen" class="screen">
+                <h2 class="screen-title">🏆 Achievements</h2>
+                <div class="achievements-container" id="achievements-container"></div>
+                <div class="achievements-progress">
+                    <span id="achievements-count">0/0</span> Unlocked
+                </div>
+                <button class="menu-btn btn-back" data-action="back-to-menu">Back</button>
+            </div>
+
             <!-- Settings -->
             <div id="settings-screen" class="screen">
                 <h2 class="screen-title">Settings</h2>
                 <div class="settings-container">
                     <div class="setting-row">
-                        <span class="setting-label">Sound Effects</span>
+                        <span class="setting-label">🔊 Sound Effects</span>
                         <button class="toggle-btn active" id="toggle-sfx" data-setting="sfx">ON</button>
                     </div>
                     <div class="setting-row">
-                        <span class="setting-label">Music</span>
+                        <span class="setting-label">🎵 Music</span>
                         <button class="toggle-btn active" id="toggle-music" data-setting="music">ON</button>
                     </div>
                     <div class="setting-row">
-                        <span class="setting-label">Difficulty</span>
+                        <span class="setting-label">📊 Difficulty</span>
                         <div class="difficulty-select">
                             <button class="diff-btn" data-diff="easy">Easy</button>
                             <button class="diff-btn active" data-diff="normal">Normal</button>
@@ -156,11 +262,24 @@
                         </div>
                     </div>
                     <div class="setting-row">
-                        <span class="setting-label">Timer</span>
+                        <span class="setting-label">⏱️ Timer</span>
                         <button class="toggle-btn active" id="toggle-timer" data-setting="timer">ON</button>
                     </div>
+                    <div class="setting-row">
+                        <span class="setting-label">🗑️ Reset Progress</span>
+                        <button class="toggle-btn btn-danger" id="btn-reset" data-action="reset-progress">RESET</button>
+                    </div>
                 </div>
-                <button class="menu-btn btn-back" data-action="back-to-menu">Back</button>
+                <button class="menu-btn btn-back" data-action="settings-back">Back</button>
+            </div>
+
+            <!-- Achievement Notification Toast -->
+            <div class="achievement-toast" id="achievement-toast" style="display:none">
+                <div class="toast-icon" id="toast-icon">🏆</div>
+                <div class="toast-content">
+                    <div class="toast-title" id="toast-title">Achievement Unlocked!</div>
+                    <div class="toast-desc" id="toast-desc"></div>
+                </div>
             </div>
 
             <!-- Particle Canvas -->

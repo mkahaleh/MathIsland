@@ -1,6 +1,7 @@
 /* ========================================
    MATH ISLAND - Input Handler
    Samsung Smart TV Remote Control Support
+   Full keyboard + remote + pause support
    ======================================== */
 
 class InputHandler {
@@ -32,6 +33,8 @@ class InputHandler {
             A: 65,
             S: 83,
             D: 68,
+            H: 72,       // Hint key
+            P: 80,       // Pause key
             ONE: 49,
             TWO: 50,
             THREE: 51,
@@ -67,7 +70,7 @@ class InputHandler {
         const code = e.keyCode;
 
         // Prevent default for game keys
-        if ([37, 38, 39, 40, 13, 32, 27].includes(code)) {
+        if ([37, 38, 39, 40, 13, 32, 27, 72, 80].includes(code)) {
             e.preventDefault();
         }
 
@@ -80,10 +83,24 @@ class InputHandler {
             return;
         }
 
+        // Global pause toggle (P key or TV pause button)
+        if (code === this.keys.P || code === this.keys.PAUSE) {
+            if (this.ui.currentScreen === 'hud') {
+                this.ui._handleAction('pause-game');
+                return;
+            } else if (this.ui.currentScreen === 'pause') {
+                this.ui._handleAction('resume-game');
+                return;
+            }
+        }
+
         // Route to screen-specific handler
         switch (this.ui.currentScreen) {
             case 'menu':
                 this._handleMenuInput(code);
+                break;
+            case 'tutorial':
+                this._handleTutorialInput(code);
                 break;
             case 'characterSelect':
                 this._handleCharacterSelectInput(code);
@@ -94,8 +111,14 @@ class InputHandler {
             case 'hud':
                 this._handleGameInput(code);
                 break;
+            case 'pause':
+                this._handlePauseInput(code);
+                break;
             case 'complete':
                 this._handleCompleteInput(code);
+                break;
+            case 'achievements':
+                this._handleAchievementsInput(code);
                 break;
             case 'settings':
                 this._handleSettingsInput(code);
@@ -159,8 +182,6 @@ class InputHandler {
             }
 
             if (isValid) {
-                const dist = Math.sqrt(dx * dx + dy * dy);
-                // Weight distance in the primary direction more heavily
                 const primaryDist = direction === 'up' || direction === 'down'
                     ? Math.abs(dy) : Math.abs(dx);
                 const crossDist = direction === 'up' || direction === 'down'
@@ -189,12 +210,14 @@ class InputHandler {
     _handleBack() {
         switch (this.ui.currentScreen) {
             case 'menu':
-                // Exit app on Samsung TV
                 try {
                     if (typeof tizen !== 'undefined') {
                         tizen.application.getCurrentApplication().exit();
                     }
                 } catch (e) {}
+                break;
+            case 'tutorial':
+                this.ui._handleAction('skip-tutorial');
                 break;
             case 'characterSelect':
                 this.ui._handleAction('back-to-menu');
@@ -203,14 +226,19 @@ class InputHandler {
                 this.ui._handleAction('back-to-characters');
                 break;
             case 'hud':
-                this.game.stopTimer();
-                this.ui._handleAction('back-to-map');
+                this.ui._handleAction('pause-game');
+                break;
+            case 'pause':
+                this.ui._handleAction('resume-game');
                 break;
             case 'complete':
                 this.ui._handleAction('back-to-map');
                 break;
-            case 'settings':
+            case 'achievements':
                 this.ui._handleAction('back-to-menu');
+                break;
+            case 'settings':
+                this.ui._handleAction('settings-back');
                 break;
         }
         audio.playSelect();
@@ -229,6 +257,30 @@ class InputHandler {
             case this.keys.ENTER:
             case this.keys.SPACE:
                 this._activateFocused();
+                break;
+        }
+    }
+
+    _handleTutorialInput(code) {
+        switch (code) {
+            case this.keys.RIGHT:
+            case this.keys.D:
+            case this.keys.ENTER:
+            case this.keys.SPACE:
+                this.ui._handleAction('next-tutorial');
+                break;
+            case this.keys.LEFT:
+            case this.keys.A:
+                if (this.ui.currentTutorialPage > 0) {
+                    this.ui.currentTutorialPage -= 2;
+                    this.ui._handleAction('next-tutorial');
+                }
+                break;
+            case this.keys.UP:
+            case this.keys.W:
+            case this.keys.DOWN:
+            case this.keys.S:
+                this._navigateFocusables(code === this.keys.UP || code === this.keys.W ? 'prev' : 'next');
                 break;
         }
     }
@@ -284,6 +336,8 @@ class InputHandler {
     }
 
     _handleGameInput(code) {
+        if (this.game.isAnswering) return;
+
         switch (code) {
             case this.keys.LEFT:
             case this.keys.A:
@@ -304,6 +358,11 @@ class InputHandler {
             case this.keys.ENTER:
             case this.keys.SPACE:
                 this._activateFocused();
+                break;
+
+            // Hint key
+            case this.keys.H:
+                this.ui._handleAction('use-hint');
                 break;
 
             // Quick answer with number keys
@@ -336,8 +395,61 @@ class InputHandler {
         }
     }
 
+    _handlePauseInput(code) {
+        switch (code) {
+            case this.keys.UP:
+            case this.keys.W:
+                this._navigateFocusables('prev');
+                break;
+            case this.keys.DOWN:
+            case this.keys.S:
+                this._navigateFocusables('next');
+                break;
+            case this.keys.ENTER:
+            case this.keys.SPACE:
+                this._activateFocused();
+                break;
+            case this.keys.PLAY:
+                this.ui._handleAction('resume-game');
+                break;
+        }
+    }
+
     _handleCompleteInput(code) {
         switch (code) {
+            case this.keys.LEFT:
+            case this.keys.A:
+                this._navigateFocusables('left');
+                break;
+            case this.keys.RIGHT:
+            case this.keys.D:
+                this._navigateFocusables('right');
+                break;
+            case this.keys.UP:
+            case this.keys.W:
+                this._navigateFocusables('up');
+                break;
+            case this.keys.DOWN:
+            case this.keys.S:
+                this._navigateFocusables('down');
+                break;
+            case this.keys.ENTER:
+            case this.keys.SPACE:
+                this._activateFocused();
+                break;
+        }
+    }
+
+    _handleAchievementsInput(code) {
+        switch (code) {
+            case this.keys.UP:
+            case this.keys.W:
+                this._navigateFocusables('up');
+                break;
+            case this.keys.DOWN:
+            case this.keys.S:
+                this._navigateFocusables('down');
+                break;
             case this.keys.LEFT:
             case this.keys.A:
                 this._navigateFocusables('left');
@@ -379,7 +491,7 @@ class InputHandler {
     }
 
     _selectAnswerByIndex(index) {
-        const btns = document.querySelectorAll('.answer-btn');
+        const btns = document.querySelectorAll('.answer-btn:not(.eliminated)');
         if (btns[index]) {
             btns[index].focus();
             btns[index].click();
