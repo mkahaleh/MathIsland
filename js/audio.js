@@ -695,6 +695,71 @@ class AudioManager {
         }
     }
 
+    // Daily reward jingle - magical ascending with sparkle
+    playDailyReward() {
+        if (!this.ctx || !this.sfxEnabled) return;
+        var now = this.ctx.currentTime;
+        var notes = [
+            { freq: 523.25, dur: 0.2, delay: 0 },     // C5
+            { freq: 659.25, dur: 0.2, delay: 0.15 },   // E5
+            { freq: 783.99, dur: 0.2, delay: 0.3 },    // G5
+            { freq: 1046.5, dur: 0.4, delay: 0.45 },   // C6
+            { freq: 1318.5, dur: 0.5, delay: 0.6 }     // E6
+        ];
+        var self = this;
+        notes.forEach(function(n) {
+            setTimeout(function() {
+                var osc = self.ctx.createOscillator();
+                var gain = self.ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.value = n.freq;
+                gain.gain.setValueAtTime(0.25, self.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, self.ctx.currentTime + n.dur);
+                osc.connect(gain);
+                gain.connect(self.sfxGain);
+                osc.start(self.ctx.currentTime);
+                osc.stop(self.ctx.currentTime + n.dur);
+            }, n.delay * 1000);
+        });
+    }
+
+    // Sticker collect sound - sparkle chime
+    playStickerCollect() {
+        if (!this.ctx || !this.sfxEnabled) return;
+        var now = this.ctx.currentTime;
+        var freqs = [880, 1108.73, 1318.51, 1760]; // A5, C#6, E6, A6
+        var self = this;
+        freqs.forEach(function(f, i) {
+            var osc = self.ctx.createOscillator();
+            var gain = self.ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.value = f;
+            var t = now + i * 0.08;
+            gain.gain.setValueAtTime(0.2, t);
+            gain.gain.exponentialRampToValueAtTime(0.01, t + 0.3);
+            osc.connect(gain);
+            gain.connect(self.sfxGain);
+            osc.start(t);
+            osc.stop(t + 0.3);
+        });
+    }
+
+    // Navigation tick sound - subtle click for TV remote navigation
+    playNavTick() {
+        if (!this.ctx || !this.sfxEnabled) return;
+        var osc = this.ctx.createOscillator();
+        var gain = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.value = 1200;
+        var now = this.ctx.currentTime;
+        gain.gain.setValueAtTime(0.08, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+        osc.connect(gain);
+        gain.connect(this.sfxGain);
+        osc.start(now);
+        osc.stop(now + 0.05);
+    }
+
     // ========================================
     //  Zone-Themed Music System
     // ========================================

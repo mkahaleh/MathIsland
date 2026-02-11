@@ -15,7 +15,9 @@ class UIManager {
             pause: document.getElementById('pause-menu'),
             complete: document.getElementById('level-complete'),
             achievements: document.getElementById('achievements-screen'),
-            settings: document.getElementById('settings-screen')
+            settings: document.getElementById('settings-screen'),
+            stickers: document.getElementById('sticker-screen'),
+            parentStats: document.getElementById('parent-stats-screen')
         };
 
         this.currentScreen = 'menu';
@@ -41,6 +43,10 @@ class UIManager {
         this._toastQueue = [];
         this._isShowingToast = false;
 
+        // Sticker popup queue
+        this._stickerQueue = [];
+        this._isShowingStickerPopup = false;
+
         // Track previously unlocked achievements for diffing
         this._previouslyUnlocked = new Set();
 
@@ -52,20 +58,59 @@ class UIManager {
     // ---- Screen Management ----
 
     showScreen(name) {
-        // Hide all
-        Object.values(this.screens).forEach(s => {
-            if (s) s.classList.remove('active');
+        const prevScreen = this.currentScreen;
+        const screenOrder = ['menu', 'tutorial', 'characterSelect', 'levelSelect', 'hud', 'pause', 'complete', 'achievements', 'stickers', 'parentStats', 'settings'];
+        const prevIndex = screenOrder.indexOf(prevScreen);
+        const nextIndex = screenOrder.indexOf(name);
+        const goingForward = nextIndex >= prevIndex;
+
+        // Exit animation on current screen
+        Object.entries(this.screens).forEach(([key, s]) => {
+            if (s && s.classList.contains('active')) {
+                s.classList.add(goingForward ? 'slide-out-left' : 'slide-out-right');
+                setTimeout(() => {
+                    s.classList.remove('active', 'slide-out-left', 'slide-out-right',
+                        'slide-in-left', 'slide-in-right', 'zoom-in', 'zoom-out');
+                }, 400);
+            }
         });
 
-        // Show target
-        if (this.screens[name]) {
-            this.screens[name].classList.add('active');
-            this.currentScreen = name;
-        }
+        // Entrance animation on new screen
+        const delay = prevScreen ? 150 : 0;
+        setTimeout(() => {
+            Object.values(this.screens).forEach(s => {
+                if (s) s.classList.remove('active');
+            });
+            if (this.screens[name]) {
+                this.screens[name].classList.add('active');
+                if (name === 'hud' || name === 'complete') {
+                    this.screens[name].classList.add('zoom-in');
+                } else {
+                    this.screens[name].classList.add(goingForward ? 'slide-in-right' : 'slide-in-left');
+                }
+                setTimeout(() => {
+                    if (this.screens[name]) {
+                        this.screens[name].classList.remove('slide-in-left', 'slide-in-right', 'zoom-in');
+                    }
+                }, 600);
+            }
+        }, delay);
+
+        this.currentScreen = name;
 
         // Update menu stats when showing menu
         if (name === 'menu') {
             this._updateMenuStats();
+        }
+
+        // Check sticker unlocks when returning to menu
+        if (name === 'menu' && typeof Rewards !== 'undefined') {
+            const newStickers = Rewards.checkStickerUnlocks(this.game);
+            if (newStickers.length > 0) {
+                setTimeout(() => {
+                    newStickers.forEach(sticker => this.showStickerPopup(sticker));
+                }, 800);
+            }
         }
     }
 
@@ -408,10 +453,53 @@ class UIManager {
         this._showHintButton();
         this._hideComboDisplay();
         this._hidePowerIndicator();
-        this._showProblem();
 
-        audio.resume();
-        audio.startMusic();
+        // Show countdown then start
+        this._showCountdown(() => {
+            this._showProblem();
+            audio.resume();
+            audio.startMusic();
+        });
+    }
+
+    // ---- Level Start Countdown ----
+
+    _showCountdown(callback) {
+        const overlay = document.getElementById('countdown-overlay');
+        const numberEl = document.getElementById('countdown-number');
+        if (!overlay || !numberEl) {
+            if (callback) callback();
+            return;
+        }
+
+        overlay.style.display = 'flex';
+        let count = 3;
+
+        const showNumber = () => {
+            if (count > 0) {
+                numberEl.className = 'countdown-number';
+                numberEl.textContent = count;
+                // Reset animation
+                void numberEl.offsetWidth;
+                numberEl.className = 'countdown-number';
+                audio.playCountdown();
+                count--;
+                setTimeout(showNumber, 800);
+            } else {
+                // Show GO!
+                numberEl.className = 'countdown-number go';
+                numberEl.textContent = 'GO!';
+                void numberEl.offsetWidth;
+                audio.playLevelStart();
+
+                setTimeout(() => {
+                    overlay.style.display = 'none';
+                    if (callback) callback();
+                }, 600);
+            }
+        };
+
+        showNumber();
     }
 
     _updateHud() {
@@ -652,7 +740,11 @@ class UIManager {
                 }
             });
 
-            this._showFeedback('wrong', `The answer is ${result.correctAnswer}`);
+            // Encouraging message instead of just showing the answer
+            const encouragement = typeof this.game.getEncouragementMessage === 'function'
+                ? this.game.getEncouragementMessage(false, 0)
+                : "Good try! Keep going!";
+            this._showFeedback('wrong', encouragement);
 
             // Character reaction - sad
             this._showCharacterReaction('sad');
@@ -757,6 +849,11 @@ class UIManager {
     }
 
     _getCorrectMessage() {
+        // Use game engine's encouragement system if available
+        if (typeof this.game.getEncouragementMessage === 'function') {
+            return this.game.getEncouragementMessage(true, this.game.streak);
+        }
+
         const messages = [
             'Correct!', 'Amazing!', 'Great job!', 'Brilliant!',
             'You got it!', 'Perfect!', 'Awesome!', 'Super!',
@@ -1349,6 +1446,159 @@ class UIManager {
         });
     }
 
+    // ---- Sticker Gallery ----
+
+    showStickerGallery() {
+        const gallery = document.getElementById('sticker-gallery');
+        const countEl = document.getElementById('sticker-count');
+        if (!gallery) return;
+
+        gallery.innerHTML = '';
+        const collected = typeof Rewards !== 'undefined' ? Rewards.getCollectedStickers() : [];
+
+        const allStickers = typeof Rewards !== 'undefined' ? Rewards.stickerDefs : [];
+        let collectedCount = 0;
+
+        allStickers.forEach(sticker => {
+            const isCollected = collected.includes(sticker.id);
+            if (isCollected) collectedCount++;
+
+            const card = document.createElement('div');
+            card.className = `sticker-card ${isCollected ? 'collected' : ''}`;
+            card.setAttribute('tabindex', '0');
+            card.innerHTML = `
+                <div class="sticker-card-icon">${isCollected ? sticker.icon : '\u{1F512}'}</div>
+                <div class="sticker-card-name">${isCollected ? sticker.name : '???'}</div>
+                <div class="sticker-card-desc">${isCollected ? sticker.description : 'Not yet unlocked'}</div>
+            `;
+            gallery.appendChild(card);
+        });
+
+        if (countEl) {
+            countEl.textContent = `${collectedCount}/${allStickers.length}`;
+        }
+
+        this.showScreen('stickers');
+        setTimeout(() => {
+            const firstCard = gallery.querySelector('.sticker-card');
+            if (firstCard) firstCard.focus();
+        }, 200);
+    }
+
+    // ---- Parent Stats ----
+
+    showParentStats() {
+        const container = document.getElementById('parent-stats-container');
+        if (!container) return;
+
+        const stats = typeof Rewards !== 'undefined' ? Rewards.getParentStats() : {};
+
+        container.innerHTML = '';
+
+        const statItems = [
+            { icon: '\u{1F4C5}', value: stats.totalLogins || 0, label: 'Total Sessions' },
+            { icon: '\u{1F525}', value: `${stats.currentStreak || 0} days`, label: 'Login Streak' },
+            { icon: '\u{1F4CA}', value: `${stats.levelsCompleted || 0}/30`, label: 'Levels Done' },
+            { icon: '\u2B50', value: `${stats.totalStars || 0}/90`, label: 'Stars Earned' },
+            { icon: '\u{1F3AF}', value: `${stats.accuracy || 0}%`, label: 'Accuracy' },
+            { icon: '\u23F1\uFE0F', value: `${stats.averageTime || 0}s`, label: 'Avg Answer Time' },
+            { icon: '\u{1F3C6}', value: `${stats.stickersCollected || 0}/${stats.totalStickers || 0}`, label: 'Stickers' },
+            { icon: '\u{1F4AA}', value: stats.strongest || '-', label: 'Strongest Area' },
+            { icon: '\u{1F4DD}', value: stats.weakest || '-', label: 'Needs Practice' }
+        ];
+
+        statItems.forEach(item => {
+            const card = document.createElement('div');
+            card.className = 'parent-stat-card';
+            card.innerHTML = `
+                <div class="stat-icon">${item.icon}</div>
+                <div class="stat-value">${item.value}</div>
+                <div class="stat-label">${item.label}</div>
+            `;
+            container.appendChild(card);
+        });
+
+        this.showScreen('parentStats');
+    }
+
+    // ---- Daily Reward Popup ----
+
+    showDailyRewardPopup(loginData) {
+        const popup = document.getElementById('daily-reward-popup');
+        if (!popup || !loginData.isNew) return;
+
+        const iconEl = document.getElementById('daily-reward-icon');
+        const titleEl = document.getElementById('daily-reward-title');
+        const textEl = document.getElementById('daily-reward-text');
+        const streakEl = document.getElementById('daily-reward-streak');
+
+        if (iconEl) iconEl.textContent = loginData.streak >= 7 ? '\u{1F381}' : '\u{1F31F}';
+        if (titleEl) titleEl.textContent = 'Welcome Back!';
+        if (textEl) textEl.textContent = loginData.streak > 1
+            ? `You've played ${loginData.streak} days in a row!`
+            : 'Start your adventure!';
+        if (streakEl) streakEl.textContent = `Day ${loginData.streak}`;
+
+        popup.style.display = 'flex';
+
+        // Focus the claim button
+        setTimeout(() => {
+            const claimBtn = popup.querySelector('.daily-reward-claim');
+            if (claimBtn) claimBtn.focus();
+        }, 500);
+    }
+
+    hideDailyRewardPopup() {
+        const popup = document.getElementById('daily-reward-popup');
+        if (popup) popup.style.display = 'none';
+    }
+
+    // ---- Sticker Popup ----
+
+    showStickerPopup(sticker) {
+        this._stickerQueue.push(sticker);
+        if (!this._isShowingStickerPopup) {
+            this._processStickerQueue();
+        }
+    }
+
+    _processStickerQueue() {
+        if (this._stickerQueue.length === 0) {
+            this._isShowingStickerPopup = false;
+            return;
+        }
+
+        this._isShowingStickerPopup = true;
+        const sticker = this._stickerQueue.shift();
+
+        const popup = document.getElementById('sticker-popup');
+        const iconEl = document.getElementById('sticker-popup-icon');
+        const nameEl = document.getElementById('sticker-popup-name');
+
+        if (!popup) {
+            this._processStickerQueue();
+            return;
+        }
+
+        if (iconEl) iconEl.textContent = sticker.icon;
+        if (nameEl) nameEl.textContent = sticker.name;
+
+        popup.style.display = 'flex';
+        audio.playStar();
+
+        // Auto-close or wait for button
+        setTimeout(() => {
+            const okBtn = popup.querySelector('.sticker-popup-ok');
+            if (okBtn) okBtn.focus();
+        }, 300);
+    }
+
+    hideStickerPopup() {
+        const popup = document.getElementById('sticker-popup');
+        if (popup) popup.style.display = 'none';
+        this._processStickerQueue();
+    }
+
     _handleAction(action) {
         switch (action) {
             case 'play':
@@ -1511,6 +1761,47 @@ class UIManager {
                 break;
 
             case 'skip-tutorial':
+                this.game.setState('characterSelect');
+                this.showScreen('characterSelect');
+                this._initCharacterGrid();
+                setTimeout(() => this.focusCharacter(0), 200);
+                audio.playSelect();
+                break;
+
+            case 'stickers':
+                this.showStickerGallery();
+                audio.playSelect();
+                break;
+
+            case 'parent-stats':
+                this.showParentStats();
+                audio.playSelect();
+                break;
+
+            case 'back-to-settings':
+                this.showScreen('settings');
+                this._applySettings();
+                audio.playSelect();
+                break;
+
+            case 'claim-daily-reward':
+                if (typeof Rewards !== 'undefined') {
+                    const reward = Rewards.claimDailyReward();
+                    if (reward && reward.sticker) {
+                        this.showStickerPopup(reward.sticker);
+                    }
+                }
+                this.hideDailyRewardPopup();
+                audio.playSelect();
+                break;
+
+            case 'close-sticker-popup':
+                this.hideStickerPopup();
+                audio.playSelect();
+                break;
+
+            case 'daily-challenge':
+                // Start daily challenge - use same flow as play
                 this.game.setState('characterSelect');
                 this.showScreen('characterSelect');
                 this._initCharacterGrid();

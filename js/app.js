@@ -39,6 +39,12 @@
         // Update menu stats
         _updateMenuStats();
 
+        // ---- Daily Rewards Check ----
+        _checkDailyLogin();
+
+        // ---- Update daily challenge button ----
+        _updateDailyChallengeButton();
+
         // Check if continue is available
         const progress = game.progress;
         const continueBtn = document.querySelector('.btn-continue');
@@ -106,6 +112,40 @@
         // Also update map stars if visible
         const mapStars = document.getElementById('map-stars');
         if (mapStars) mapStars.textContent = totalStars;
+
+        // Update streak display
+        if (typeof Rewards !== 'undefined') {
+            const dailyData = Rewards.getDailyData();
+            const streakEl = document.getElementById('menu-streak-days');
+            if (streakEl) streakEl.textContent = dailyData.streak || 0;
+        }
+    }
+
+    function _checkDailyLogin() {
+        if (typeof Rewards === 'undefined') return;
+
+        const loginData = Rewards.checkDailyLogin();
+
+        if (loginData.isNew && ui) {
+            // Show daily reward popup after a short delay
+            setTimeout(() => {
+                ui.showDailyRewardPopup(loginData);
+                audio.playDailyReward();
+            }, 1500);
+        }
+    }
+
+    function _updateDailyChallengeButton() {
+        if (typeof Rewards === 'undefined') return;
+
+        const btn = document.getElementById('btn-daily-challenge');
+        if (!btn) return;
+
+        const challenge = Rewards.getDailyChallenge();
+        if (challenge.completed) {
+            btn.style.opacity = '0.5';
+            btn.querySelector('.btn-text').textContent = 'Challenge Done!';
+        }
     }
 
     function _setupFirstRunTutorial() {

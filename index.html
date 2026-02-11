@@ -34,9 +34,17 @@
                         <span class="btn-icon">📖</span>
                         <span class="btn-text">Continue</span>
                     </button>
+                    <button class="menu-btn btn-daily" data-action="daily-challenge" id="btn-daily-challenge">
+                        <span class="btn-icon">⚡</span>
+                        <span class="btn-text">Daily Challenge</span>
+                    </button>
                     <button class="menu-btn btn-achievements" data-action="achievements">
                         <span class="btn-icon">🏆</span>
                         <span class="btn-text">Achievements</span>
+                    </button>
+                    <button class="menu-btn btn-stickers" data-action="stickers">
+                        <span class="btn-icon">🎨</span>
+                        <span class="btn-text">Sticker Book</span>
                     </button>
                     <button class="menu-btn btn-settings" data-action="settings">
                         <span class="btn-icon">⚙️</span>
@@ -46,6 +54,7 @@
                 <div class="menu-stats" id="menu-stats">
                     <span class="menu-stat">⭐ <span id="menu-total-stars">0</span></span>
                     <span class="menu-stat">📊 <span id="menu-levels-done">0</span>/30</span>
+                    <span class="menu-stat">🔥 <span id="menu-streak-days">0</span> day streak</span>
                 </div>
                 <div class="menu-characters"></div>
             </div>
@@ -154,6 +163,11 @@
                     </div>
                 </div>
 
+                <!-- Level Start Countdown -->
+                <div class="countdown-overlay" id="countdown-overlay" style="display:none">
+                    <div class="countdown-number" id="countdown-number">3</div>
+                </div>
+
                 <!-- Feedback Overlay -->
                 <div class="feedback-overlay" id="feedback-overlay">
                     <div class="feedback-content" id="feedback-content"></div>
@@ -241,6 +255,23 @@
                 <button class="menu-btn btn-back" data-action="back-to-menu">Back</button>
             </div>
 
+            <!-- Sticker Gallery -->
+            <div id="sticker-screen" class="screen">
+                <h2 class="screen-title">Sticker Collection</h2>
+                <div class="sticker-gallery" id="sticker-gallery"></div>
+                <div class="sticker-progress">
+                    <span id="sticker-count">0/20</span> Collected
+                </div>
+                <button class="menu-btn btn-back" data-action="back-to-menu">Back</button>
+            </div>
+
+            <!-- Parent Stats -->
+            <div id="parent-stats-screen" class="screen">
+                <h2 class="screen-title">Parent Dashboard</h2>
+                <div class="parent-stats-container" id="parent-stats-container"></div>
+                <button class="menu-btn btn-back" data-action="back-to-settings">Back</button>
+            </div>
+
             <!-- Settings -->
             <div id="settings-screen" class="screen">
                 <h2 class="screen-title">Settings</h2>
@@ -266,6 +297,10 @@
                         <button class="toggle-btn active" id="toggle-timer" data-setting="timer">ON</button>
                     </div>
                     <div class="setting-row">
+                        <span class="setting-label">📊 Parent Stats</span>
+                        <button class="toggle-btn" id="btn-parent-stats" data-action="parent-stats">VIEW</button>
+                    </div>
+                    <div class="setting-row">
                         <span class="setting-label">🗑️ Reset Progress</span>
                         <button class="toggle-btn btn-danger" id="btn-reset" data-action="reset-progress">RESET</button>
                     </div>
@@ -282,6 +317,27 @@
                 </div>
             </div>
 
+            <!-- Daily Reward Popup -->
+            <div class="daily-reward-popup" id="daily-reward-popup" style="display:none">
+                <div class="daily-reward-content">
+                    <div class="daily-reward-icon" id="daily-reward-icon">🎁</div>
+                    <h3 class="daily-reward-title" id="daily-reward-title">Daily Reward!</h3>
+                    <p class="daily-reward-text" id="daily-reward-text">Welcome back!</p>
+                    <div class="daily-reward-streak" id="daily-reward-streak">Day 1</div>
+                    <button class="menu-btn btn-play daily-reward-claim" data-action="claim-daily-reward">Collect!</button>
+                </div>
+            </div>
+
+            <!-- Sticker Unlock Popup -->
+            <div class="sticker-popup" id="sticker-popup" style="display:none">
+                <div class="sticker-popup-content">
+                    <div class="sticker-popup-icon" id="sticker-popup-icon">🎨</div>
+                    <h3 class="sticker-popup-title">New Sticker!</h3>
+                    <p class="sticker-popup-name" id="sticker-popup-name"></p>
+                    <button class="menu-btn btn-confirm sticker-popup-ok" data-action="close-sticker-popup">Awesome!</button>
+                </div>
+            </div>
+
             <!-- Particle Canvas -->
             <canvas id="particle-canvas" width="1920" height="1080"></canvas>
         </div>
@@ -294,6 +350,7 @@
     <script src="js/characters.js"></script>
     <script src="js/math-engine.js"></script>
     <script src="js/levels.js"></script>
+    <script src="js/rewards.js"></script>
     <script src="js/island-renderer.js"></script>
     <script src="js/game-engine.js"></script>
     <script src="js/ui-manager.js"></script>

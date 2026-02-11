@@ -191,6 +191,7 @@ class ParticleSystem {
         this.emitters = [];
         this.running = true;
         this.lastTime = performance.now();
+        this.MAX_PARTICLES = 300; // Cap for TV hardware performance
 
         // Ambient system state
         this._ambientInterval = null;
@@ -210,6 +211,11 @@ class ParticleSystem {
         this.lastTime = now;
 
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+        // Performance: cap particle count for TV hardware
+        if (this.particles.length > this.MAX_PARTICLES) {
+            this.particles.splice(0, this.particles.length - this.MAX_PARTICLES);
+        }
 
         // Update emitters
         for (let i = this.emitters.length - 1; i >= 0; i--) {

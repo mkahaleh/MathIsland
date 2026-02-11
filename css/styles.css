@@ -2614,3 +2614,624 @@ button:focus-visible,
     40% { transform: scale(1.3); color: var(--gold); }
     100% { transform: scale(1); }
 }
+
+/* ========================================
+   SCREEN TRANSITIONS - Smooth TV feel
+   ======================================== */
+.screen.slide-in-right {
+    animation: slideInRight 0.5s var(--elastic) forwards;
+}
+
+.screen.slide-in-left {
+    animation: slideInLeft 0.5s var(--elastic) forwards;
+}
+
+.screen.slide-out-right {
+    animation: slideOutRight 0.4s var(--smooth) forwards;
+}
+
+.screen.slide-out-left {
+    animation: slideOutLeft 0.4s var(--smooth) forwards;
+}
+
+.screen.zoom-in {
+    animation: zoomIn 0.5s var(--elastic) forwards;
+}
+
+.screen.zoom-out {
+    animation: zoomOut 0.3s var(--smooth) forwards;
+}
+
+@keyframes slideInRight {
+    0% { transform: translateX(100px); opacity: 0; }
+    100% { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes slideInLeft {
+    0% { transform: translateX(-100px); opacity: 0; }
+    100% { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes slideOutRight {
+    0% { transform: translateX(0); opacity: 1; }
+    100% { transform: translateX(100px); opacity: 0; }
+}
+
+@keyframes slideOutLeft {
+    0% { transform: translateX(0); opacity: 1; }
+    100% { transform: translateX(-100px); opacity: 0; }
+}
+
+@keyframes zoomIn {
+    0% { transform: scale(0.85); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes zoomOut {
+    0% { transform: scale(1); opacity: 1; }
+    100% { transform: scale(0.85); opacity: 0; }
+}
+
+/* ========================================
+   LEVEL START COUNTDOWN
+   ======================================== */
+.countdown-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 50;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+
+.countdown-number {
+    font-size: 300px;
+    font-weight: 900;
+    color: white;
+    text-shadow:
+        0 0 60px rgba(255, 215, 0, 0.8),
+        0 0 120px rgba(255, 215, 0, 0.4),
+        0 10px 40px rgba(0, 0, 0, 0.5);
+    animation: countdownPop 0.8s var(--bounce) forwards;
+    line-height: 1;
+}
+
+.countdown-number.go {
+    font-size: 200px;
+    color: var(--grass-green);
+    text-shadow:
+        0 0 60px rgba(6, 214, 160, 0.8),
+        0 0 120px rgba(6, 214, 160, 0.4),
+        0 10px 40px rgba(0, 0, 0, 0.5);
+    letter-spacing: 20px;
+}
+
+@keyframes countdownPop {
+    0% { transform: scale(3); opacity: 0; }
+    30% { transform: scale(0.8); opacity: 1; }
+    50% { transform: scale(1.1); }
+    70% { transform: scale(0.95); }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes countdownShrink {
+    0% { transform: scale(1); opacity: 1; }
+    100% { transform: scale(0.3); opacity: 0; }
+}
+
+/* ========================================
+   DAILY REWARD POPUP
+   ======================================== */
+.daily-reward-popup {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 90;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    animation: fadeIn 0.4s var(--smooth);
+}
+
+@keyframes fadeIn {
+    0% { opacity: 0; }
+    100% { opacity: 1; }
+}
+
+.daily-reward-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    background: linear-gradient(180deg, rgba(255, 215, 0, 0.15), rgba(131, 56, 236, 0.1));
+    backdrop-filter: blur(25px);
+    -webkit-backdrop-filter: blur(25px);
+    border-radius: 40px;
+    padding: 50px 80px;
+    border: 3px solid rgba(255, 215, 0, 0.4);
+    box-shadow:
+        0 30px 100px rgba(0, 0, 0, 0.5),
+        0 0 60px rgba(255, 215, 0, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.15);
+    animation: dailyRewardIn 0.6s var(--elastic);
+    min-width: 500px;
+    text-align: center;
+}
+
+@keyframes dailyRewardIn {
+    0% { transform: scale(0.5) translateY(60px); opacity: 0; }
+    100% { transform: scale(1) translateY(0); opacity: 1; }
+}
+
+.daily-reward-icon {
+    font-size: 120px;
+    animation: dailyRewardBounce 2s ease-in-out infinite;
+    filter: drop-shadow(0 10px 30px rgba(255, 215, 0, 0.4));
+}
+
+@keyframes dailyRewardBounce {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    25% { transform: translateY(-15px) rotate(-5deg); }
+    75% { transform: translateY(-15px) rotate(5deg); }
+}
+
+.daily-reward-title {
+    font-size: 48px;
+    font-weight: 900;
+    color: var(--gold);
+    text-shadow: 0 4px 15px rgba(255, 215, 0, 0.4);
+    letter-spacing: 3px;
+}
+
+.daily-reward-text {
+    font-size: 28px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.9);
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+.daily-reward-streak {
+    font-size: 36px;
+    font-weight: 900;
+    color: var(--coral-light);
+    text-shadow: 0 3px 10px rgba(239, 71, 111, 0.4);
+    background: rgba(239, 71, 111, 0.15);
+    padding: 10px 30px;
+    border-radius: 25px;
+    border: 2px solid rgba(239, 71, 111, 0.3);
+}
+
+.daily-reward-claim {
+    margin-top: 10px;
+    min-width: 300px;
+    animation: confirmPulse 2s ease-in-out infinite;
+}
+
+/* ========================================
+   STICKER POPUP
+   ======================================== */
+.sticker-popup {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 95;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+}
+
+.sticker-popup-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(25px);
+    -webkit-backdrop-filter: blur(25px);
+    border-radius: 35px;
+    padding: 45px 70px;
+    border: 3px solid rgba(255, 215, 0, 0.3);
+    box-shadow: 0 25px 80px rgba(0, 0, 0, 0.5);
+    animation: stickerPopIn 0.5s var(--elastic);
+    text-align: center;
+}
+
+@keyframes stickerPopIn {
+    0% { transform: scale(0) rotate(-15deg); }
+    60% { transform: scale(1.1) rotate(3deg); }
+    100% { transform: scale(1) rotate(0deg); }
+}
+
+.sticker-popup-icon {
+    font-size: 140px;
+    animation: stickerSpin 1s var(--elastic);
+    filter: drop-shadow(0 10px 30px rgba(255, 215, 0, 0.5));
+}
+
+@keyframes stickerSpin {
+    0% { transform: scale(0) rotate(-360deg); }
+    100% { transform: scale(1) rotate(0deg); }
+}
+
+.sticker-popup-title {
+    font-size: 42px;
+    font-weight: 900;
+    color: var(--gold);
+    text-shadow: 0 3px 12px rgba(255, 215, 0, 0.4);
+}
+
+.sticker-popup-name {
+    font-size: 28px;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.9);
+    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+.sticker-popup-ok {
+    margin-top: 15px;
+    min-width: 250px;
+}
+
+/* ========================================
+   STICKER GALLERY SCREEN
+   ======================================== */
+#sticker-screen {
+    background: linear-gradient(180deg,
+        #1a1a2e 0%,
+        #16213e 50%,
+        #0f3460 100%
+    );
+    position: relative;
+    overflow: hidden;
+    padding: 40px 80px;
+}
+
+#sticker-screen::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background:
+        radial-gradient(circle at 20% 30%, rgba(255, 215, 0, 0.1) 0%, transparent 40%),
+        radial-gradient(circle at 80% 70%, rgba(131, 56, 236, 0.08) 0%, transparent 40%),
+        radial-gradient(circle at 50% 50%, rgba(6, 214, 160, 0.06) 0%, transparent 50%);
+    pointer-events: none;
+}
+
+.sticker-gallery {
+    z-index: 2;
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 20px;
+    width: 100%;
+    max-width: 1500px;
+    max-height: 680px;
+    overflow-y: auto;
+    padding: 10px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
+
+.sticker-card {
+    background: rgba(255, 255, 255, 0.06);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border-radius: 24px;
+    padding: 24px 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 10px;
+    border: 2px solid rgba(255, 255, 255, 0.08);
+    transition: all 0.3s var(--bounce);
+    min-height: 180px;
+}
+
+.sticker-card.collected {
+    border-color: rgba(255, 215, 0, 0.3);
+    background: rgba(255, 215, 0, 0.08);
+}
+
+.sticker-card.collected .sticker-card-icon {
+    animation: stickerIdle 3s ease-in-out infinite;
+}
+
+@keyframes stickerIdle {
+    0%, 100% { transform: translateY(0) scale(1); }
+    50% { transform: translateY(-5px) scale(1.05); }
+}
+
+.sticker-card:not(.collected) {
+    filter: grayscale(0.8) brightness(0.5);
+    opacity: 0.5;
+}
+
+.sticker-card:focus {
+    transform: scale(1.08) translateY(-4px);
+    border-color: rgba(255, 215, 0, 0.5);
+    box-shadow: 0 0 0 3px rgba(255, 215, 0, 0.3), 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.sticker-card-icon {
+    font-size: 60px;
+    filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.3));
+}
+
+.sticker-card-name {
+    font-size: 18px;
+    font-weight: 800;
+    color: rgba(255, 255, 255, 0.85);
+}
+
+.sticker-card-desc {
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.5);
+    line-height: 1.3;
+}
+
+.sticker-progress {
+    z-index: 2;
+    margin-top: 20px;
+    margin-bottom: 20px;
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--gold);
+    text-shadow: 0 2px 8px rgba(255, 215, 0, 0.3);
+    background: rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    padding: 10px 30px;
+    border-radius: 30px;
+    border: 1px solid rgba(255, 215, 0, 0.15);
+}
+
+/* ========================================
+   PARENT STATS SCREEN
+   ======================================== */
+#parent-stats-screen {
+    background: linear-gradient(180deg,
+        #0f172a 0%,
+        #1e293b 50%,
+        #334155 100%
+    );
+    position: relative;
+    padding: 40px 80px;
+}
+
+.parent-stats-container {
+    z-index: 2;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+    width: 100%;
+    max-width: 1200px;
+    margin-bottom: 30px;
+}
+
+.parent-stat-card {
+    background: rgba(255, 255, 255, 0.06);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border-radius: 24px;
+    padding: 28px 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.parent-stat-card .stat-icon {
+    font-size: 44px;
+    margin-bottom: 4px;
+}
+
+.parent-stat-card .stat-value {
+    font-size: 44px;
+    font-weight: 900;
+    color: white;
+}
+
+.parent-stat-card .stat-label {
+    font-size: 18px;
+    color: rgba(255, 255, 255, 0.6);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+/* ========================================
+   ENHANCED TV FOCUS INDICATORS
+   ======================================== */
+
+/* Animated focus ring for all interactive elements */
+.menu-btn:focus,
+.answer-btn:focus,
+.character-card:focus,
+.map-node:focus,
+.toggle-btn:focus,
+.diff-btn:focus,
+.hud-btn:focus {
+    position: relative;
+}
+
+/* Pulsing focus glow */
+.menu-btn:focus {
+    animation: focusPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes focusPulse {
+    0%, 100% {
+        filter: brightness(1.1);
+    }
+    50% {
+        filter: brightness(1.25);
+    }
+}
+
+/* Navigation hint arrows - show directional hints on focused elements */
+.nav-hint {
+    position: absolute;
+    font-size: 24px;
+    color: rgba(255, 255, 255, 0.6);
+    animation: navHintPulse 1.5s ease-in-out infinite;
+    pointer-events: none;
+    z-index: 100;
+}
+
+@keyframes navHintPulse {
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 0.8; }
+}
+
+/* ========================================
+   DAILY CHALLENGE BUTTON
+   ======================================== */
+.btn-daily {
+    background: linear-gradient(180deg, #ff9a56, var(--orange-warm), #e67300);
+    color: white;
+    box-shadow: 0 6px 0 #b35900, 0 8px 25px rgba(251, 133, 0, 0.4);
+    position: relative;
+    overflow: visible;
+}
+
+.btn-daily:focus, .btn-daily.focused {
+    background: linear-gradient(180deg, #ffb580, #ff9a56, var(--orange-warm));
+    box-shadow: 0 6px 0 #b35900, 0 0 0 4px white, 0 12px 40px rgba(251, 133, 0, 0.5);
+}
+
+.btn-daily:active {
+    box-shadow: 0 2px 0 #b35900, 0 4px 15px rgba(251, 133, 0, 0.3);
+}
+
+.btn-daily .daily-badge {
+    position: absolute;
+    top: -10px;
+    right: -10px;
+    background: var(--coral-red);
+    color: white;
+    font-size: 16px;
+    font-weight: 900;
+    padding: 4px 12px;
+    border-radius: 15px;
+    box-shadow: 0 2px 8px rgba(239, 71, 111, 0.5);
+    animation: badgeBounce 2s ease-in-out infinite;
+}
+
+@keyframes badgeBounce {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
+
+/* ========================================
+   STICKERS BUTTON
+   ======================================== */
+.btn-stickers {
+    background: linear-gradient(180deg, #f0abfc, #d946ef, #a21caf);
+    color: white;
+    box-shadow: 0 6px 0 #7e22ce, 0 8px 25px rgba(217, 70, 239, 0.4);
+}
+
+.btn-stickers:focus, .btn-stickers.focused {
+    background: linear-gradient(180deg, #f5d0fe, #f0abfc, #d946ef);
+    box-shadow: 0 6px 0 #7e22ce, 0 0 0 4px white, 0 12px 40px rgba(217, 70, 239, 0.5);
+}
+
+.btn-stickers:active {
+    box-shadow: 0 2px 0 #7e22ce, 0 4px 15px rgba(217, 70, 239, 0.3);
+}
+
+/* ========================================
+   IDLE ANIMATIONS - Keep screen alive
+   ======================================== */
+#main-menu .menu-btn {
+    animation: idleFloat 4s ease-in-out infinite;
+}
+
+#main-menu .menu-btn:nth-child(1) { animation-delay: 0s; }
+#main-menu .menu-btn:nth-child(2) { animation-delay: 0.5s; }
+#main-menu .menu-btn:nth-child(3) { animation-delay: 1.0s; }
+#main-menu .menu-btn:nth-child(4) { animation-delay: 1.5s; }
+#main-menu .menu-btn:nth-child(5) { animation-delay: 2.0s; }
+#main-menu .menu-btn:nth-child(6) { animation-delay: 2.5s; }
+
+@keyframes idleFloat {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-4px); }
+}
+
+/* Override idle float when focused (focus takes priority) */
+#main-menu .menu-btn:focus {
+    animation: focusPulse 1.5s ease-in-out infinite;
+    transform: scale(1.08);
+}
+
+/* Breathing glow on menu stats */
+.menu-stats {
+    animation: breatheGlow 4s ease-in-out infinite;
+}
+
+/* ========================================
+   ENCOURAGEMENT MESSAGE STYLES
+   ======================================== */
+.feedback-content.wrong {
+    font-size: 50px;
+    color: rgba(255, 255, 255, 0.9);
+    text-shadow: 0 3px 15px rgba(0, 0, 0, 0.5);
+}
+
+/* ========================================
+   HINT ELIMINATED BUTTONS
+   ======================================== */
+.answer-btn.hint-eliminated {
+    opacity: 0.25 !important;
+    transform: scale(0.9);
+    filter: grayscale(0.5);
+    pointer-events: none;
+}
+
+/* ========================================
+   ACHIEVEMENT ICON / NAME within card
+   (fix selectors for showAchievements)
+   ======================================== */
+.achievement-icon {
+    font-size: 48px;
+    filter: drop-shadow(0 3px 8px rgba(0, 0, 0, 0.3));
+}
+
+.achievement-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.achievement-name {
+    font-size: 20px;
+    font-weight: 800;
+    color: rgba(255, 255, 255, 0.85);
+}
+
+.achievement-desc {
+    font-size: 16px;
+    color: rgba(255, 255, 255, 0.5);
+    line-height: 1.3;
+}

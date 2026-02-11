@@ -123,6 +123,12 @@ class InputHandler {
             case 'settings':
                 this._handleSettingsInput(code);
                 break;
+            case 'stickers':
+                this._handleStickersInput(code);
+                break;
+            case 'parentStats':
+                this._handleParentStatsInput(code);
+                break;
         }
     }
 
@@ -152,6 +158,10 @@ class InputHandler {
 
         if (nextIndex !== undefined && nextIndex !== currentIndex) {
             focusables[nextIndex].focus();
+            // Play subtle navigation tick
+            if (typeof audio !== 'undefined' && audio.playNavTick) {
+                audio.playNavTick();
+            }
         }
     }
 
@@ -239,6 +249,12 @@ class InputHandler {
                 break;
             case 'settings':
                 this.ui._handleAction('settings-back');
+                break;
+            case 'stickers':
+                this.ui._handleAction('back-to-menu');
+                break;
+            case 'parentStats':
+                this.ui._handleAction('back-to-settings');
                 break;
         }
         audio.playSelect();
@@ -486,6 +502,48 @@ class InputHandler {
             case this.keys.ENTER:
             case this.keys.SPACE:
                 this._activateFocused();
+                break;
+        }
+    }
+
+    _handleStickersInput(code) {
+        switch (code) {
+            case this.keys.UP:
+            case this.keys.W:
+                this._navigateFocusables('up');
+                break;
+            case this.keys.DOWN:
+            case this.keys.S:
+                this._navigateFocusables('down');
+                break;
+            case this.keys.LEFT:
+            case this.keys.A:
+                this._navigateFocusables('left');
+                break;
+            case this.keys.RIGHT:
+            case this.keys.D:
+                this._navigateFocusables('right');
+                break;
+            case this.keys.ENTER:
+            case this.keys.SPACE:
+                this._activateFocused();
+                break;
+        }
+    }
+
+    _handleParentStatsInput(code) {
+        switch (code) {
+            case this.keys.ENTER:
+            case this.keys.SPACE:
+                this._activateFocused();
+                break;
+            case this.keys.UP:
+            case this.keys.W:
+                this._navigateFocusables('prev');
+                break;
+            case this.keys.DOWN:
+            case this.keys.S:
+                this._navigateFocusables('next');
                 break;
         }
     }

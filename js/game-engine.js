@@ -56,6 +56,11 @@ class GameEngine {
         // --- NEW: Score Animation ---
         this.lastScoreGain = 0;
 
+        // --- NEW: Adaptive Difficulty ---
+        this._performanceHistory = [];  // Last N answers: true/false
+        this._adaptiveLevel = 0;       // -2 to +2 adjustment
+        this._sessionLevelsPlayed = 0;  // For session sticker tracking
+
         // --- NEW: Achievement System ---
         this.achievements = this._initAchievements();
         this._loadAchievements();
@@ -236,10 +241,17 @@ class GameEngine {
         // Reset score animation tracking
         this.lastScoreGain = 0;
 
+        // Reset adaptive tracking for this level
+        this._performanceHistory = [];
+
         // Timer
         this.timeRemaining = levelDef.timePerProblem;
 
         this.setState('playing');
+
+        // Track session levels
+        this._sessionLevelsPlayed++;
+
         return true;
     }
 
@@ -319,6 +331,13 @@ class GameEngine {
 
             result.newAchievements = [];
         }
+
+        // Track performance for adaptive difficulty
+        this._performanceHistory.push(isCorrect);
+        if (this._performanceHistory.length > 10) {
+            this._performanceHistory.shift();
+        }
+        this._updateAdaptiveDifficulty();
 
         return result;
     }
@@ -537,6 +556,84 @@ class GameEngine {
                 this.characterMood = 'idle';
                 this._moodResetTimer = null;
             }, 5000);
+        }
+    }
+
+    // ---- Adaptive Difficulty ----
+
+    _updateAdaptiveDifficulty() {
+        if (this._performanceHistory.length < 5) return;
+
+        const recent = this._performanceHistory.slice(-5);
+        const recentCorrect = recent.filter(Boolean).length;
+
+        // If getting 5/5 right, make slightly harder
+        if (recentCorrect >= 5 && this._adaptiveLevel < 2) {
+            this._adaptiveLevel++;
+        }
+        // If getting 1/5 or less right, make easier
+        else if (recentCorrect <= 1 && this._adaptiveLevel > -2) {
+            this._adaptiveLevel--;
+        }
+        // If getting 2/5, nudge easier
+        else if (recentCorrect <= 2 && this._adaptiveLevel > -1) {
+            this._adaptiveLevel--;
+        }
+    }
+
+    getAdaptiveDifficulty() {
+        // Returns current adaptive difficulty adjustment
+        return this._adaptiveLevel;
+    }
+
+    getEncouragementMessage(isCorrect, streak) {
+        if (isCorrect) {
+            if (streak >= 10) {
+                return Utils.randomChoice([
+                    'INCREDIBLE! You are a math legend!',
+                    'UNSTOPPABLE! Nothing can stop you!',
+                    'PHENOMENAL! You are on fire!',
+                    'AMAZING! Math genius at work!'
+                ]);
+            }
+            if (streak >= 5) {
+                return Utils.randomChoice([
+                    'Fantastic streak! Keep going!',
+                    'You are on a roll!',
+                    'Math superstar!',
+                    'Brilliant! So impressive!'
+                ]);
+            }
+            if (streak >= 3) {
+                return Utils.randomChoice([
+                    'Great combo! Keep it up!',
+                    'You are doing amazing!',
+                    'Wonderful work!',
+                    'Super smart!'
+                ]);
+            }
+            return Utils.randomChoice([
+                'Correct! Great job!',
+                'You got it! Amazing!',
+                'Perfect! Well done!',
+                'Right answer! Brilliant!',
+                'Yes! You are so clever!',
+                'Awesome! Keep going!',
+                'Fantastic! Nailed it!',
+                'Wonderful! Math star!'
+            ]);
+        } else {
+            // NEVER negative - always encouraging
+            return Utils.randomChoice([
+                "Almost! You'll get the next one!",
+                "Good try! Keep going!",
+                "So close! You're learning!",
+                "Nice effort! Try the next one!",
+                "Don't worry, practice makes perfect!",
+                "You're getting better every time!",
+                "Great attempt! Onward!",
+                "That was a tricky one! You've got this!"
+            ]);
         }
     }
 
@@ -953,5 +1050,9 @@ class GameEngine {
         // Reset achievements
         this.achievements = this._initAchievements();
         this._saveAchievements();
+
+        // Reset adaptive difficulty
+        this._adaptiveLevel = 0;
+        this._performanceHistory = [];
     }
 }
