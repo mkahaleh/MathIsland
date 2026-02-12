@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=1920, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Property Tycoon</title>
+
+    <!-- Samsung TV specific meta -->
+    <meta name="format-detection" content="telephone=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="css/styles.css">
+
+    <!-- Preload fonts for TV rendering -->
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Georgia&display=swap');
+    </style>
+</head>
+<body>
+    <div id="app-container">
+
+        <!-- ==========================================
+             SETUP SCREEN
+             ========================================== -->
+        <div id="setup-screen" class="visible">
+            <div id="setup-content">
+                <!-- Populated by app.js -->
+            </div>
+        </div>
+
+        <!-- ==========================================
+             GAME SCREEN
+             ========================================== -->
+        <div id="game-screen">
+            <!-- Canvas Area (Board + Tokens + Dice) -->
+            <div id="canvas-area">
+                <canvas id="game-canvas" width="1920" height="1080"></canvas>
+            </div>
+
+            <!-- Right Panel (Players, Actions, Log) -->
+            <div id="right-panel">
+                <!-- Turn Information -->
+                <div id="turn-info"></div>
+
+                <!-- Phase Indicator -->
+                <div id="phase-indicator" class="phase-indicator"></div>
+
+                <!-- Player Cards -->
+                <div id="player-panel"></div>
+
+                <!-- Action Buttons -->
+                <div id="action-panel"></div>
+
+                <!-- Message Log -->
+                <div id="message-log"></div>
+
+                <!-- Remote Control Tips -->
+                <div id="remote-tips"></div>
+            </div>
+        </div>
+
+        <!-- ==========================================
+             OVERLAY SYSTEM
+             ========================================== -->
+        <div id="overlay" class="overlay">
+            <div id="overlay-content"></div>
+        </div>
+
+        <!-- Card Display (floating) -->
+        <div id="card-display"></div>
+
+        <!-- Property Detail (floating) -->
+        <div id="property-detail"></div>
+
+    </div>
+
+    <!-- ==========================================
+         SCRIPTS
+         ========================================== -->
+    <!-- Game Data (constants, board, cards) -->
+    <script src="js/gameData.js"></script>
+
+    <!-- Board Renderer (Canvas drawing) -->
+    <script src="js/boardRenderer.js"></script>
+
+    <!-- Game Engine (core logic) -->
+    <script src="js/gameEngine.js"></script>
+
+    <!-- AI Player -->
+    <script src="js/aiPlayer.js"></script>
+
+    <!-- Input Handler (TV remote, keyboard) -->
+    <script src="js/inputHandler.js"></script>
+
+    <!-- UI Manager (panels, overlays, menus) -->
+    <script src="js/uiManager.js"></script>
+
+    <!-- Sound Engine -->
+    <script src="js/soundEngine.js"></script>
+
+    <!-- Main Application Controller -->
+    <script src="js/app.js"></script>
+</body>
+</html>
