@@ -958,7 +958,24 @@ body {
     display: flex;
     gap: 30px;
     margin-top: 8px;
-    z-index: 2;
+    z-index: 5;
+    position: relative;
+}
+
+#level-select .select-actions {
+    position: absolute;
+    bottom: 30px;
+    left: 50px;
+    z-index: 10;
+}
+
+#level-select .select-actions .btn-back {
+    font-size: 26px;
+    padding: 16px 40px;
+    background: rgba(0,0,0,0.5);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 3px solid rgba(255,255,255,0.3);
 }
 
 /* ========================================
@@ -996,8 +1013,9 @@ body {
     justify-content: center;
     gap: 40px;
     width: 100%;
-    z-index: 3;
-    margin-bottom: -10px;
+    z-index: 5;
+    margin-bottom: -20px;
+    padding-top: 10px;
 }
 
 .map-header .screen-title {
@@ -1024,16 +1042,17 @@ body {
 
 .island-map {
     position: relative;
-    width: 1600px;
-    height: 750px;
+    width: 1840px;
+    height: 850px;
     margin: 0 auto;
     z-index: 2;
+    left: -20px;
 }
 
 .map-node {
     position: absolute;
-    width: 100px;
-    height: 100px;
+    width: 105px;
+    height: 105px;
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -1057,7 +1076,7 @@ body {
 .map-node::after {
     content: attr(data-label);
     position: absolute;
-    bottom: -30px;
+    bottom: -34px;
     font-size: 18px;
     font-weight: 700;
     white-space: nowrap;
@@ -1117,7 +1136,7 @@ body {
 
 .level-info {
     position: absolute;
-    bottom: 120px;
+    bottom: 30px;
     left: 50%;
     transform: translateX(-50%);
     background: rgba(0, 0, 0, 0.75);
@@ -3144,11 +3163,12 @@ button:focus-visible,
 }
 
 #main-menu .menu-btn:nth-child(1) { animation-delay: 0s; }
-#main-menu .menu-btn:nth-child(2) { animation-delay: 0.5s; }
-#main-menu .menu-btn:nth-child(3) { animation-delay: 1.0s; }
-#main-menu .menu-btn:nth-child(4) { animation-delay: 1.5s; }
-#main-menu .menu-btn:nth-child(5) { animation-delay: 2.0s; }
-#main-menu .menu-btn:nth-child(6) { animation-delay: 2.5s; }
+#main-menu .menu-btn:nth-child(2) { animation-delay: 0.4s; }
+#main-menu .menu-btn:nth-child(3) { animation-delay: 0.8s; }
+#main-menu .menu-btn:nth-child(4) { animation-delay: 1.2s; }
+#main-menu .menu-btn:nth-child(5) { animation-delay: 1.6s; }
+#main-menu .menu-btn:nth-child(6) { animation-delay: 2.0s; }
+#main-menu .menu-btn:nth-child(7) { animation-delay: 2.4s; }
 
 @keyframes idleFloat {
     0%, 100% { transform: translateY(0); }
@@ -3370,11 +3390,14 @@ button:focus-visible,
 /* Enhance map node focus with 3D pop */
 .map-node:focus,
 .map-node.focused {
-    transform: translateY(-6px) scale(1.25);
+    transform: translateY(-8px) scale(1.3);
     box-shadow:
-        0 10px 0 rgba(0, 0, 0, 0.25),
-        0 0 0 5px var(--gold),
-        0 15px 40px rgba(255, 215, 0, 0.5);
+        0 12px 0 rgba(0, 0, 0, 0.25),
+        0 0 0 6px var(--gold),
+        0 0 30px rgba(255, 215, 0, 0.6),
+        0 18px 40px rgba(0, 0, 0, 0.3);
+    outline: none;
+    z-index: 10;
 }
 
 .map-node:active {
@@ -3589,6 +3612,8 @@ button:focus-visible,
 .map-node {
     border: 5px solid rgba(255,255,255,0.6) !important;
     box-shadow: 0 6px 0 rgba(0,0,0,0.25), 0 10px 20px rgba(0,0,0,0.2), inset 0 -4px 8px rgba(0,0,0,0.15), inset 0 4px 8px rgba(255,255,255,0.25) !important;
+    width: 105px !important;
+    height: 105px !important;
 }
 
 /* -- CARTOON PANELS -- */
@@ -3633,11 +3658,12 @@ button:focus-visible,
     animation: idleBounce 4s ease-in-out infinite;
 }
 .menu-buttons .menu-btn:nth-child(1) { animation-delay: 0s; }
-.menu-buttons .menu-btn:nth-child(2) { animation-delay: 0.4s; }
-.menu-buttons .menu-btn:nth-child(3) { animation-delay: 0.8s; }
-.menu-buttons .menu-btn:nth-child(4) { animation-delay: 1.2s; }
-.menu-buttons .menu-btn:nth-child(5) { animation-delay: 1.6s; }
-.menu-buttons .menu-btn:nth-child(6) { animation-delay: 2.0s; }
+.menu-buttons .menu-btn:nth-child(2) { animation-delay: 0.3s; }
+.menu-buttons .menu-btn:nth-child(3) { animation-delay: 0.6s; }
+.menu-buttons .menu-btn:nth-child(4) { animation-delay: 0.9s; }
+.menu-buttons .menu-btn:nth-child(5) { animation-delay: 1.2s; }
+.menu-buttons .menu-btn:nth-child(6) { animation-delay: 1.5s; }
+.menu-buttons .menu-btn:nth-child(7) { animation-delay: 1.8s; }
 
 @keyframes idleBounce {
     0%, 100% { transform: translateY(0); }
@@ -3648,9 +3674,31 @@ button:focus-visible,
     animation: none !important;
 }
 
-/* Focus pulse */
+/* Focus pulse - highly visible for TV remote navigation */
 .menu-btn:focus {
     animation: cartoonFocus 1.2s ease-in-out infinite !important;
+    outline: 4px solid var(--gold) !important;
+    outline-offset: 4px !important;
+    transform: scale(1.06) !important;
+}
+
+.answer-btn:focus,
+.vsai-answer-btn:focus {
+    outline: 4px solid var(--gold) !important;
+    outline-offset: 3px !important;
+    transform: scale(1.08) !important;
+    box-shadow: 0 0 20px rgba(255,215,0,0.5) !important;
+}
+
+.toggle-btn:focus,
+.diff-btn:focus {
+    outline: 3px solid var(--gold) !important;
+    outline-offset: 3px !important;
+}
+
+.character-card:focus {
+    outline: 4px solid var(--gold) !important;
+    outline-offset: 4px !important;
 }
 
 @keyframes cartoonFocus {

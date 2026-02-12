@@ -68,30 +68,33 @@ class UIManager {
         const goingForward = nextIndex >= prevIndex;
         const isSameScreen = prevScreen === name;
 
-        // Exit animation on current screen (skip if navigating to same screen)
-        if (!isSameScreen) {
+        if (isSameScreen) {
+            // Same screen - just ensure it's active, no animations
+            if (this.screens[name] && !this.screens[name].classList.contains('active')) {
+                this.screens[name].classList.add('active');
+            }
+            this.currentScreen = name;
+        } else {
+            // Different screen - animate transition
+
+            // Exit animation on old screen
             Object.entries(this.screens).forEach(([key, s]) => {
                 if (s && s.classList.contains('active')) {
                     s.classList.add(goingForward ? 'slide-out-left' : 'slide-out-right');
                     setTimeout(() => {
-                        // Only remove animation classes here; 'active' is handled by entrance code
-                        s.classList.remove('slide-out-left', 'slide-out-right',
+                        s.classList.remove('active', 'slide-out-left', 'slide-out-right',
                             'slide-in-left', 'slide-in-right', 'zoom-in', 'zoom-out');
                     }, 400);
                 }
             });
-        }
 
-        // Entrance animation on new screen
-        const delay = (!isSameScreen && prevScreen) ? 150 : 0;
-        setTimeout(() => {
-            Object.values(this.screens).forEach(s => {
-                if (s) s.classList.remove('active');
-            });
-            if (this.screens[name]) {
-                this.screens[name].classList.add('active');
-                if (!isSameScreen) {
-                    if (name === 'hud' || name === 'complete') {
+            // Entrance animation on new screen
+            const delay = prevScreen ? 150 : 0;
+            setTimeout(() => {
+                // Don't remove active from ALL screens here - exit timeout handles old ones
+                if (this.screens[name]) {
+                    this.screens[name].classList.add('active');
+                    if (name === 'hud' || name === 'vsaiHud' || name === 'complete') {
                         this.screens[name].classList.add('zoom-in');
                     } else {
                         this.screens[name].classList.add(goingForward ? 'slide-in-right' : 'slide-in-left');
@@ -102,10 +105,10 @@ class UIManager {
                         }
                     }, 600);
                 }
-            }
-        }, delay);
+            }, delay);
 
-        this.currentScreen = name;
+            this.currentScreen = name;
+        }
 
         // Update menu stats when showing menu
         if (name === 'menu') {
@@ -304,20 +307,20 @@ class UIManager {
             mapStars.textContent = progress.totalStars || 0;
         }
 
-        // Island shapes for each zone
+        // Zone positions - spread wide across the full map with a winding path
         const zonePositions = [
-            { cx: 250, cy: 550 },   // Beach
-            { cx: 550, cy: 350 },   // Jungle
-            { cx: 850, cy: 250 },   // Cave
-            { cx: 1100, cy: 350 },  // Volcano
-            { cx: 1300, cy: 200 },  // Sky
-            { cx: 1450, cy: 100 }   // Space
+            { cx: 200, cy: 700 },    // Beach (bottom left)
+            { cx: 550, cy: 480 },    // Jungle
+            { cx: 950, cy: 600 },    // Cave
+            { cx: 1300, cy: 400 },   // Volcano
+            { cx: 1050, cy: 200 },   // Sky
+            { cx: 1600, cy: 150 }    // Space (top right)
         ];
 
         // Draw paths between zones
         const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-        svg.setAttribute('width', '1600');
-        svg.setAttribute('height', '750');
+        svg.setAttribute('width', '1840');
+        svg.setAttribute('height', '850');
         svg.style.position = 'absolute';
         svg.style.top = '0';
         svg.style.left = '0';
@@ -359,38 +362,38 @@ class UIManager {
         Levels.zones.forEach((zone, zi) => {
             const pos = zonePositions[zi];
 
-            // Island background blob with glow
+            // Island background blob with glow (bigger)
             const blob = document.createElement('div');
             blob.className = 'map-island-bg';
             blob.style.cssText = `
-                left: ${pos.cx - 110}px;
-                top: ${pos.cy - 70}px;
-                width: 220px;
-                height: 140px;
-                background: radial-gradient(ellipse, ${zone.color}50, ${zone.color}15, transparent);
+                left: ${pos.cx - 160}px;
+                top: ${pos.cy - 110}px;
+                width: 320px;
+                height: 220px;
+                background: radial-gradient(ellipse, ${zone.color}55, ${zone.color}20, transparent);
                 border-radius: 50%;
-                filter: blur(2px);
+                filter: blur(3px);
             `;
             map.appendChild(blob);
 
-            // Zone name label (Unity-style banner)
+            // Zone name label (Unity-style banner, bigger)
             const zoneLabel = document.createElement('div');
             zoneLabel.className = 'map-zone-label';
             zoneLabel.style.cssText = `
                 position: absolute;
-                left: ${pos.cx - 70}px;
-                top: ${pos.cy + 60}px;
-                width: 140px;
+                left: ${pos.cx - 90}px;
+                top: ${pos.cy + 90}px;
+                width: 180px;
                 text-align: center;
-                font-size: 16px;
+                font-size: 20px;
                 font-weight: 800;
                 color: white;
                 text-shadow: 0 2px 6px rgba(0,0,0,0.5);
                 background: ${zone.color}cc;
-                padding: 5px 12px;
-                border-radius: 12px;
-                border: 2px solid rgba(255,255,255,0.3);
-                box-shadow: 0 3px 0 rgba(0,0,0,0.2);
+                padding: 8px 16px;
+                border-radius: 14px;
+                border: 3px solid rgba(255,255,255,0.3);
+                box-shadow: 0 4px 0 rgba(0,0,0,0.2);
                 z-index: 3;
                 letter-spacing: 0.5px;
             `;
@@ -414,14 +417,14 @@ class UIManager {
                 node.setAttribute('data-level', levelNum);
                 node.setAttribute('data-label', levelDef.name);
 
-                const nodeSize = isBoss ? 110 : 90;
+                const nodeSize = isBoss ? 130 : 105;
                 node.style.cssText = `
                     left: ${lp.x - nodeSize / 2}px;
                     top: ${lp.y - nodeSize / 2}px;
                     width: ${nodeSize}px;
                     height: ${nodeSize}px;
                     background: linear-gradient(180deg, ${zone.color}ff 0%, ${zone.color}cc 60%, ${zone.color}88 100%);
-                    font-size: ${isBoss ? '36px' : '30px'};
+                    font-size: ${isBoss ? '40px' : '34px'};
                 `;
 
                 if (isBoss) {
@@ -446,15 +449,15 @@ class UIManager {
 
     _getLevelPositionsInZone(center, count) {
         const positions = [];
-        const spread = 70;
-        const angleStep = (Math.PI * 0.8) / (count - 1 || 1);
-        const startAngle = -Math.PI * 0.4;
+        const spread = 100;
+        const angleStep = (Math.PI * 1.0) / (count - 1 || 1);
+        const startAngle = -Math.PI * 0.5;
 
         for (let i = 0; i < count; i++) {
             const angle = startAngle + angleStep * i;
             positions.push({
-                x: center.cx + Math.cos(angle) * spread * (i % 2 === 0 ? 1 : 0.6),
-                y: center.cy + Math.sin(angle) * spread - i * 15
+                x: center.cx + Math.cos(angle) * spread * (i % 2 === 0 ? 1.1 : 0.7),
+                y: center.cy + Math.sin(angle) * spread - i * 18
             });
         }
         return positions;
