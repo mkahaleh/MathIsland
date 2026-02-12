@@ -1,6 +1,7 @@
 /**
- * Property Tycoon - Main Application Controller
- * Ties together all modules: engine, renderer, UI, AI, input
+ * Property Tycoon: Riyadh Edition - Main Application Controller
+ * Ties together: auth, storage, engine, renderer, UI, AI, input
+ * Tracks all user actions persistently
  */
 
 class App {
@@ -10,8 +11,10 @@ class App {
         this.ui = null;
         this.ai = null;
         this.input = null;
-        this.gameLoop = null;
-        this.setupPhase = true;
+        this.auth = null;
+        this.currentPhase = 'login'; // login, setup, playing
+        this.gameStartTime = null;
+        this.currentUser = null;
 
         // Player setup state
         this.setupConfig = {
@@ -31,7 +34,6 @@ class App {
      * Initialize the application
      */
     init() {
-        // Wait for DOM
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', () => this.onReady());
         } else {
@@ -50,7 +52,6 @@ class App {
             return;
         }
 
-        // Set canvas to 1080p
         canvas.width = 1920;
         canvas.height = 1080;
 
@@ -62,23 +63,90 @@ class App {
         this.input.onAction = (action, data) => this.handleAction(action, data);
         this.input.onBack = () => this.handleBack();
 
-        // Show setup screen
-        this.showSetupScreen();
+        // Initialize auth
+        this.auth = new AuthUI(storage);
+        this.auth.onLoginSuccess = (user) => this.onLogin(user);
+        this.auth.onGuestPlay = () => this.onGuestLogin();
+
+        // Load user preferences
+        this.loadPreferences();
+
+        // Show login screen
+        this.showLoginScreen();
 
         // Start render loop
         this.startRenderLoop();
     }
 
+    // ========================================
+    // LOGIN FLOW
+    // ========================================
+
+    /**
+     * Show the login screen
+     */
+    showLoginScreen() {
+        this.currentPhase = 'login';
+        document.getElementById('login-screen').classList.add('visible');
+        document.getElementById('setup-screen').classList.remove('visible');
+        document.getElementById('game-screen').classList.remove('visible');
+
+        this.auth.render();
+        setTimeout(() => this.input.refreshFocusables(), 100);
+    }
+
+    /**
+     * Handle successful login
+     */
+    onLogin(user) {
+        this.currentUser = user;
+
+        // Load preferences from profile
+        this.loadPreferences();
+
+        // Restore preferred setup
+        const prefs = storage.getPreferences();
+        this.setupConfig.players[0].name = user.username;
+        this.setupConfig.players[0].tokenId = prefs.lastTokenId || 0;
+        this.setupConfig.playerCount = prefs.lastPlayerCount || 2;
+
+        // Log action
+        storage.logAction('login', { username: user.username });
+
+        this.showSetupScreen();
+    }
+
+    /**
+     * Handle guest login
+     */
+    onGuestLogin() {
+        this.currentUser = null;
+        this.showSetupScreen();
+    }
+
+    /**
+     * Load user preferences
+     */
+    loadPreferences() {
+        const prefs = storage.getPreferences();
+        if (typeof soundEngine !== 'undefined') {
+            soundEngine.enabled = prefs.soundEnabled !== false;
+            soundEngine.setVolume(prefs.soundVolume || 0.3);
+        }
+    }
+
+    // ========================================
+    // SETUP SCREEN
+    // ========================================
+
     /**
      * Show the game setup/configuration screen
      */
     showSetupScreen() {
-        this.setupPhase = true;
-        const setupScreen = document.getElementById('setup-screen');
-        const gameScreen = document.getElementById('game-screen');
-
-        if (setupScreen) setupScreen.classList.add('visible');
-        if (gameScreen) gameScreen.classList.remove('visible');
+        this.currentPhase = 'setup';
+        document.getElementById('login-screen').classList.remove('visible');
+        document.getElementById('setup-screen').classList.add('visible');
+        document.getElementById('game-screen').classList.remove('visible');
 
         this.renderSetupUI();
     }
@@ -92,11 +160,16 @@ class App {
 
         const tokens = GAME_DATA.TOKENS;
         const config = this.setupConfig;
+        const username = this.currentUser ? this.currentUser.username : 'Guest';
 
         let html = `
             <div class="setup-panel">
                 <h1 class="setup-title">PROPERTY TYCOON</h1>
-                <h2 class="setup-subtitle">New Game Setup</h2>
+                <h2 class="setup-subtitle">Riyadh Edition</h2>
+                <div class="setup-user-bar">
+                    <span>Playing as: <strong>${username}</strong></span>
+                    <button class="btn-auth-link focusable" id="btn-switch-user">Switch</button>
+                </div>
 
                 <div class="player-count-section">
                     <label>Number of Players:</label>
@@ -186,6 +259,16 @@ class App {
      * Attach event handlers for setup screen
      */
     attachSetupHandlers() {
+        // Switch user button
+        const switchBtn = document.getElementById('btn-switch-user');
+        if (switchBtn) {
+            switchBtn.addEventListener('click', () => {
+                storage.logoutUser();
+                this.currentUser = null;
+                this.showLoginScreen();
+            });
+        }
+
         // Player count buttons
         document.querySelectorAll('.btn-count').forEach(btn => {
             btn.addEventListener('click', () => {
@@ -238,6 +321,10 @@ class App {
         }
     }
 
+    // ========================================
+    // GAME FLOW
+    // ========================================
+
     /**
      * Start a new game with the configured players
      */
@@ -252,6 +339,12 @@ class App {
             return;
         }
 
+        // Save preferences
+        if (this.currentUser) {
+            storage.setPreference('lastTokenId', playerConfigs[0].tokenId);
+            storage.setPreference('lastPlayerCount', config.playerCount);
+        }
+
         // Initialize game engine
         this.engine = new GameEngine();
         this.ui = new UIManager(this.engine);
@@ -264,14 +357,20 @@ class App {
 
         // Start game
         this.engine.initGame(playerConfigs);
+        this.gameStartTime = Date.now();
+
+        // Track game start
+        this.trackAction('game_start', {
+            playerCount: config.playerCount,
+            opponents: playerConfigs.filter(p => p.isAI).map(p => p.aiDifficulty)
+        });
+        this.trackStat('gamesPlayed', 1);
 
         // Switch to game screen
-        this.setupPhase = false;
-        const setupScreen = document.getElementById('setup-screen');
-        const gameScreen = document.getElementById('game-screen');
-
-        if (setupScreen) setupScreen.classList.remove('visible');
-        if (gameScreen) gameScreen.classList.add('visible');
+        this.currentPhase = 'playing';
+        document.getElementById('login-screen').classList.remove('visible');
+        document.getElementById('setup-screen').classList.remove('visible');
+        document.getElementById('game-screen').classList.add('visible');
 
         // Initial render
         this.onGameStateChange(this.engine);
@@ -286,17 +385,25 @@ class App {
     onGameStateChange(state) {
         this.ui.update(state);
         this.input.refreshFocusables();
+
+        // Track highest net worth
+        if (this.currentUser && state.players) {
+            const humanPlayer = state.players.find(p => !p.isAI && !p.bankrupt);
+            if (humanPlayer) {
+                storage.setStatMax('highestNetWorth', humanPlayer.totalWorth);
+            }
+        }
     }
 
     /**
      * Handle player actions (from UI buttons, keyboard, or remote)
      */
     handleAction(actionId, data) {
-        if (this.setupPhase) return;
+        if (this.currentPhase !== 'playing') return;
         if (!this.engine || this.engine.gamePhase !== 'playing') return;
 
         const player = this.engine.getCurrentPlayer();
-        if (player.isAI) return; // Don't process manual actions for AI
+        if (player.isAI) return;
 
         switch (actionId) {
             case 'roll':
@@ -305,7 +412,6 @@ class App {
                     if (result) {
                         this.renderer.setDiceValues(result.d1, result.d2);
                         this.renderer.startDiceAnimation(() => {
-                            // Check if action needed after roll
                             if (this.engine.turnPhase === 'action' && this.engine.pendingAction) {
                                 if (this.engine.pendingAction.type === 'buy_property') {
                                     this.renderer.highlightedSpace = this.engine.pendingAction.spaceId;
@@ -313,14 +419,25 @@ class App {
                             }
                             this.onGameStateChange(this.engine);
                         });
+
+                        // Track dice roll
+                        this.trackAction('dice_roll', { d1: result.d1, d2: result.d2, total: result.total });
+                        if (result.doubles) this.trackStat('doublesRolled', 1);
                     }
                 }
                 break;
 
             case 'buy':
                 if (this.engine.pendingAction?.type === 'buy_property') {
-                    this.engine.buyProperty(this.engine.pendingAction.spaceId);
+                    const spaceId = this.engine.pendingAction.spaceId;
+                    const space = GAME_DATA.BOARD[spaceId];
+                    this.engine.buyProperty(spaceId);
                     this.renderer.highlightedSpace = -1;
+
+                    // Track purchase
+                    this.trackAction('buy_property', { propertyName: space.name, price: space.price, spaceId });
+                    this.trackStat('propertiesBought', 1);
+                    this.trackStat('totalMoneySpent', space.price);
                 }
                 break;
 
@@ -375,14 +492,16 @@ class App {
 
             case 'declare_bankruptcy':
                 this.engine.declareBankruptcy(player);
+                this.trackAction('lose_game', { turn: this.engine.turnNumber });
+                this.trackStat('timesBankrupt', 1);
                 break;
 
             case 'new_game':
+                this.endGameTracking();
                 this.showSetupScreen();
                 break;
 
             case 'info':
-                // Show current space info
                 this.ui.showPropertyDetail(player.position, this.engine);
                 this.input.refreshFocusables();
                 break;
@@ -398,23 +517,34 @@ class App {
                 btn.addEventListener('click', () => {
                     const propId = parseInt(btn.dataset.prop);
                     const action = btn.dataset.action;
+                    const space = GAME_DATA.BOARD[propId];
 
                     switch (action) {
                         case 'build':
-                            this.engine.buyHouse(propId);
+                            if (this.engine.buyHouse(propId)) {
+                                const houses = this.engine.properties[propId].houses;
+                                if (houses === 5) {
+                                    this.trackAction('build_hotel', { propertyName: space.name });
+                                    this.trackStat('hotelsBuilt', 1);
+                                } else {
+                                    this.trackAction('build_house', { propertyName: space.name, houses });
+                                    this.trackStat('housesBuilt', 1);
+                                }
+                            }
                             break;
                         case 'sell-house':
                             this.engine.sellHouse(propId);
                             break;
                         case 'mortgage':
-                            this.engine.mortgageProperty(propId);
+                            if (this.engine.mortgageProperty(propId)) {
+                                this.trackAction('mortgage', { propertyName: space.name });
+                            }
                             break;
                         case 'unmortgage':
                             this.engine.unmortgageProperty(propId);
                             break;
                     }
 
-                    // Refresh manager
                     this.ui.showPropertyManager(this.engine);
                     this.setupManagerHandlers();
                 });
@@ -435,10 +565,12 @@ class App {
      * Handle back button
      */
     handleBack() {
+        if (this.currentPhase === 'login') return;
+
         if (this.ui && this.ui.currentOverlay) {
             this.ui.hideOverlay();
             this.input.refreshFocusables();
-        } else {
+        } else if (this.currentPhase === 'playing') {
             this.showPauseMenu();
         }
     }
@@ -451,7 +583,9 @@ class App {
             <div class="pause-menu">
                 <h2>Game Paused</h2>
                 <button class="btn-action focusable" data-action="resume">Resume Game</button>
+                <button class="btn-action focusable" data-action="save">Save Game</button>
                 <button class="btn-action focusable" data-action="new_game">New Game</button>
+                <button class="btn-action focusable" data-action="quit">Quit to Login</button>
             </div>
         `;
 
@@ -461,18 +595,37 @@ class App {
             document.querySelectorAll('.pause-menu .btn-action').forEach(btn => {
                 btn.addEventListener('click', () => {
                     const action = btn.dataset.action;
-                    if (action === 'resume') {
-                        this.ui.hideOverlay();
-                    } else if (action === 'new_game') {
-                        this.ui.hideOverlay();
-                        this.showSetupScreen();
+                    this.ui.hideOverlay();
+
+                    switch (action) {
+                        case 'resume':
+                            break;
+                        case 'save':
+                            if (this.engine) {
+                                const saved = storage.saveGame(this.engine.serialize());
+                                this.ui.addMessage(saved ? 'Game saved!' : 'Failed to save.');
+                            }
+                            break;
+                        case 'new_game':
+                            this.endGameTracking();
+                            this.showSetupScreen();
+                            break;
+                        case 'quit':
+                            this.endGameTracking();
+                            this.showLoginScreen();
+                            break;
                     }
+
                     this.input.refreshFocusables();
                 });
             });
             this.input.refreshFocusables();
         }, 50);
     }
+
+    // ========================================
+    // AI TURN
+    // ========================================
 
     /**
      * Check if it's AI's turn and execute
@@ -483,14 +636,8 @@ class App {
         const player = this.engine.getCurrentPlayer();
         if (!player.isAI || player.bankrupt) return;
 
-        // Delay to let UI update
         await new Promise(r => setTimeout(r, 500));
-
-        // Execute AI turn
         await this.ai.executeTurn();
-
-        // If doubles, AI might get another turn
-        // Check again after AI turn completes
         await new Promise(r => setTimeout(r, 300));
 
         if (this.engine.gamePhase === 'playing') {
@@ -502,20 +649,93 @@ class App {
 
         // Check for game over
         if (this.engine.gamePhase === 'gameover' && this.engine.winner) {
-            this.ui.showGameOver(this.engine.winner);
-            this.input.refreshFocusables();
+            this.handleGameOver();
         }
     }
+
+    /**
+     * Handle game over
+     */
+    handleGameOver() {
+        const winner = this.engine.winner;
+        this.ui.showGameOver(winner);
+
+        // Track results
+        if (!winner.isAI) {
+            this.trackAction('win_game', {
+                turn: this.engine.turnNumber,
+                netWorth: winner.totalWorth
+            });
+            this.trackStat('gamesWon', 1);
+            storage.setStatMax('highestNetWorth', winner.totalWorth);
+        } else {
+            this.trackAction('lose_game', { turn: this.engine.turnNumber, winner: winner.name });
+            this.trackStat('gamesLost', 1);
+        }
+
+        this.endGameTracking();
+
+        // Wire up new game button
+        setTimeout(() => {
+            document.querySelectorAll('[data-action="new_game"]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    this.ui.hideOverlay();
+                    this.showSetupScreen();
+                });
+            });
+            this.input.refreshFocusables();
+        }, 50);
+    }
+
+    // ========================================
+    // PERSISTENT TRACKING
+    // ========================================
+
+    /**
+     * Track a user action
+     */
+    trackAction(type, details) {
+        if (!this.currentUser) return;
+        storage.logAction(type, details || {});
+    }
+
+    /**
+     * Track a stat increment
+     */
+    trackStat(statName, value) {
+        if (!this.currentUser) return;
+        storage.updateStat(statName, value);
+    }
+
+    /**
+     * End game tracking (play time, turn count, etc.)
+     */
+    endGameTracking() {
+        if (!this.currentUser || !this.gameStartTime) return;
+
+        const playTime = Date.now() - this.gameStartTime;
+        storage.updateStat('totalPlayTimeMs', playTime);
+
+        if (this.engine) {
+            storage.setStatMax('longestGame', this.engine.turnNumber);
+            this.trackAction('game_end', { turn: this.engine.turnNumber, duration: playTime });
+        }
+
+        this.gameStartTime = null;
+    }
+
+    // ========================================
+    // RENDER LOOP
+    // ========================================
 
     /**
      * Main render loop
      */
     startRenderLoop() {
         const loop = () => {
-            if (this.renderer && this.engine && !this.setupPhase) {
+            if (this.renderer && this.engine && this.currentPhase === 'playing') {
                 this.renderer.render(this.engine);
-            } else if (this.renderer && this.setupPhase) {
-                // Draw board preview in setup
+            } else if (this.renderer && this.currentPhase !== 'playing') {
                 this.renderer.render(null);
             }
             requestAnimationFrame(loop);

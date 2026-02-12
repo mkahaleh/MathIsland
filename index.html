@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=1920, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Property Tycoon</title>
+    <title>Property Tycoon: Riyadh Edition</title>
 
     <!-- Samsung TV specific meta -->
     <meta name="format-detection" content="telephone=no">
@@ -22,9 +22,18 @@
     <div id="app-container">
 
         <!-- ==========================================
+             LOGIN SCREEN
+             ========================================== -->
+        <div id="login-screen" class="visible">
+            <div id="login-content">
+                <!-- Populated by auth.js -->
+            </div>
+        </div>
+
+        <!-- ==========================================
              SETUP SCREEN
              ========================================== -->
-        <div id="setup-screen" class="visible">
+        <div id="setup-screen">
             <div id="setup-content">
                 <!-- Populated by app.js -->
             </div>
@@ -79,6 +88,12 @@
     <!-- ==========================================
          SCRIPTS
          ========================================== -->
+    <!-- Persistent Storage (localStorage) -->
+    <script src="js/storage.js"></script>
+
+    <!-- Authentication UI -->
+    <script src="js/auth.js"></script>
+
     <!-- Game Data (constants, board, cards) -->
     <script src="js/gameData.js"></script>
 
