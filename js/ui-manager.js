@@ -500,6 +500,9 @@ class UIManager {
         // Snapshot current achievements before playing
         this._snapshotAchievements();
 
+        // Set character portrait in HUD
+        this._updateCharacterPortrait();
+
         this.showScreen('hud');
         this._updateHud();
         this._updateProgress();
@@ -553,6 +556,48 @@ class UIManager {
         };
 
         showNumber();
+    }
+
+    _updateCharacterPortrait() {
+        const portrait = document.getElementById('hud-character-portrait');
+        const emoji = document.getElementById('hud-char-emoji');
+        const mood = document.getElementById('hud-char-mood');
+        if (!portrait || !emoji) return;
+
+        const char = this.game.selectedCharacter;
+        if (char) {
+            emoji.textContent = char.emoji;
+        }
+        if (mood) mood.textContent = '';
+        portrait.className = 'hud-character-portrait';
+    }
+
+    setCharacterMood(moodType) {
+        const portrait = document.getElementById('hud-character-portrait');
+        const mood = document.getElementById('hud-char-mood');
+        const char = this.game.selectedCharacter;
+        if (!portrait || !char) return;
+
+        portrait.classList.remove('happy', 'sad');
+        void portrait.offsetWidth; // Reset animation
+
+        if (moodType === 'happy' || moodType === 'celebrate') {
+            portrait.classList.add('happy');
+            if (mood && char.animations && char.animations.happy) {
+                mood.textContent = char.animations.happy[1] || '✨';
+            }
+        } else if (moodType === 'sad') {
+            portrait.classList.add('sad');
+            if (mood && char.animations && char.animations.sad) {
+                mood.textContent = char.animations.sad[1] || '💫';
+            }
+        }
+
+        // Clear mood after a delay
+        setTimeout(() => {
+            if (mood) mood.textContent = '';
+            portrait.classList.remove('happy', 'sad');
+        }, 1500);
     }
 
     _updateHud() {
@@ -755,6 +800,7 @@ class UIManager {
             btnElement.classList.add('correct');
             audio.playCorrect();
             audio.playStreak(this.game.streak);
+            this.setCharacterMood('happy');
 
             // Particle celebration
             const rect = btnElement.getBoundingClientRect();
@@ -782,6 +828,7 @@ class UIManager {
         } else {
             btnElement.classList.add('wrong');
             audio.playWrong();
+            this.setCharacterMood('sad');
 
             const rect = btnElement.getBoundingClientRect();
             this.game.particles.wrongShake(rect.left + rect.width / 2, rect.top + rect.height / 2);

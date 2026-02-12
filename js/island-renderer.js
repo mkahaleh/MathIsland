@@ -18,6 +18,26 @@ class IslandRenderer {
         this._initClouds();
         this._initWaves();
         this._initStars();
+        this._initNoiseTexture();
+    }
+
+    _initNoiseTexture() {
+        // Pre-render a subtle grain texture for painterly feel
+        const size = 256;
+        const noiseCanvas = document.createElement('canvas');
+        noiseCanvas.width = size;
+        noiseCanvas.height = size;
+        const nCtx = noiseCanvas.getContext('2d');
+        const imageData = nCtx.createImageData(size, size);
+        for (let i = 0; i < imageData.data.length; i += 4) {
+            const v = Math.random() * 30;
+            imageData.data[i] = v;
+            imageData.data[i + 1] = v;
+            imageData.data[i + 2] = v;
+            imageData.data[i + 3] = 18; // Very subtle
+        }
+        nCtx.putImageData(imageData, 0, 0);
+        this._noisePattern = this.ctx.createPattern(noiseCanvas, 'repeat');
     }
 
     _initClouds() {
@@ -121,8 +141,9 @@ class IslandRenderer {
         // Rainbow arc
         this._drawRainbowArc();
 
-        // Vignette
+        // Post-processing
         this._drawVignette(0.25);
+        this._applyPostProcessing(0.06);
     }
 
     _drawFloatingDecorations() {
@@ -249,6 +270,7 @@ class IslandRenderer {
         this._drawPalmTree(1750, this.height * 0.52, 1.1);
         this._drawShells();
         this._drawVignette(0.15);
+        this._applyPostProcessing(0.07);
     }
 
     // ========== JUNGLE ZONE ==========
@@ -312,7 +334,9 @@ class IslandRenderer {
         ctx.restore();
 
         this._drawFlowers();
+        this._drawForegroundDecor(this.height * 0.82);
         this._drawVignette(0.3);
+        this._applyPostProcessing(0.05);
     }
 
     // ========== CRYSTAL CAVE ==========
@@ -376,6 +400,7 @@ class IslandRenderer {
         ctx.restore();
 
         this._drawVignette(0.4);
+        this._applyPostProcessing(0.04);
     }
 
     // ========== VOLCANO ==========
@@ -445,6 +470,7 @@ class IslandRenderer {
 
         this._drawEmbers();
         this._drawVignette(0.35);
+        this._applyPostProcessing(0.09);
     }
 
     // ========== CLOUD KINGDOM ==========
@@ -470,6 +496,7 @@ class IslandRenderer {
         }
 
         this._drawVignette(0.1);
+        this._applyPostProcessing(0.05);
     }
 
     // ========== SPACE ==========
@@ -511,6 +538,7 @@ class IslandRenderer {
         this._drawPlanet(1400, 350, 120);
         this._drawShootingStars();
         this._drawVignette(0.3);
+        this._applyPostProcessing(0.03);
     }
 
     // ========== HELPER FUNCTIONS ==========
@@ -525,6 +553,71 @@ class IslandRenderer {
         vig.addColorStop(1, `rgba(0, 0, 0, ${intensity})`);
         ctx.fillStyle = vig;
         ctx.fillRect(0, 0, this.width, this.height);
+    }
+
+    // Unity-style post-processing pass
+    _applyPostProcessing(warmth) {
+        const ctx = this.ctx;
+        warmth = warmth || 0.08;
+
+        // 1. Painterly grain texture
+        if (this._noisePattern) {
+            ctx.save();
+            ctx.fillStyle = this._noisePattern;
+            ctx.globalAlpha = 1;
+            ctx.fillRect(0, 0, this.width, this.height);
+            ctx.restore();
+        }
+
+        // 2. Warm color grading (golden tint overlay like Unity post-processing)
+        ctx.save();
+        ctx.globalCompositeOperation = 'overlay';
+        ctx.fillStyle = `rgba(255, 200, 100, ${warmth})`;
+        ctx.fillRect(0, 0, this.width, this.height);
+        ctx.restore();
+
+        // 3. Soft bloom / glow pass (bright center softness)
+        ctx.save();
+        ctx.globalCompositeOperation = 'screen';
+        const bloom = ctx.createRadialGradient(
+            this.width * 0.5, this.height * 0.35, 0,
+            this.width * 0.5, this.height * 0.35, this.width * 0.6
+        );
+        bloom.addColorStop(0, 'rgba(255, 255, 240, 0.06)');
+        bloom.addColorStop(0.5, 'rgba(255, 220, 180, 0.03)');
+        bloom.addColorStop(1, 'transparent');
+        ctx.fillStyle = bloom;
+        ctx.fillRect(0, 0, this.width, this.height);
+        ctx.restore();
+    }
+
+    // Foreground decorative grass/bushes for depth
+    _drawForegroundDecor(groundY) {
+        const ctx = this.ctx;
+        ctx.save();
+
+        // Grass tufts along the bottom
+        for (let i = 0; i < 30; i++) {
+            const x = i * 68 + Math.sin(i * 1.7) * 20;
+            const y = groundY + Math.sin(i * 0.8) * 5;
+            const h = 20 + (i * 7) % 25;
+            const sway = Math.sin(this.time * 1.5 + i * 0.5) * 4;
+
+            ctx.fillStyle = `hsl(${120 + (i * 5) % 30}, 55%, ${25 + (i * 3) % 15}%)`;
+            ctx.beginPath();
+            ctx.moveTo(x - 4, y);
+            ctx.quadraticCurveTo(x - 2 + sway, y - h * 0.7, x + sway * 0.5, y - h);
+            ctx.quadraticCurveTo(x + 3 + sway * 0.3, y - h * 0.5, x + 6, y);
+            ctx.fill();
+
+            // Second blade
+            ctx.beginPath();
+            ctx.moveTo(x + 3, y);
+            ctx.quadraticCurveTo(x + 7 + sway * 0.8, y - h * 0.6, x + 5 + sway, y - h * 0.85);
+            ctx.quadraticCurveTo(x + 10 + sway * 0.3, y - h * 0.4, x + 12, y);
+            ctx.fill();
+        }
+        ctx.restore();
     }
 
     _drawLightRays(x, y, alpha) {
@@ -1032,20 +1125,191 @@ class IslandRenderer {
         }
     }
 
-    // Island map overview
+    // Island map overview - rich painted world
     drawIslandMap(progress) {
         const ctx = this.ctx;
+
+        // Deep ocean gradient
         const ocean = ctx.createLinearGradient(0, 0, 0, this.height);
-        ocean.addColorStop(0, '#87ceeb');
-        ocean.addColorStop(0.3, '#48cae4');
+        ocean.addColorStop(0, '#6dd5ed');
+        ocean.addColorStop(0.15, '#48cae4');
+        ocean.addColorStop(0.4, '#0096c7');
         ocean.addColorStop(0.7, '#0077b6');
         ocean.addColorStop(1, '#023e8a');
         ctx.fillStyle = ocean;
         ctx.fillRect(0, 0, this.width, this.height);
 
-        this._drawSun(1700, 100, 80);
+        // Atmospheric light rays from sun
+        this._drawLightRays(1750, 80, 0.04);
+        this._drawSun(1750, 80, 70);
         this._drawClouds();
-        this._drawWater(this.height * 0.82);
+
+        // Draw actual island landmasses matching the zone positions
+        this._drawMapIslands();
+
+        // Ocean waves in foreground
+        this._drawWater(this.height * 0.85);
+
         this._drawVignette(0.15);
+        this._applyPostProcessing(0.05);
+    }
+
+    _drawMapIslands() {
+        const ctx = this.ctx;
+        const t = this.time;
+
+        // Island definitions matching zone positions in ui-manager
+        const islands = [
+            { cx: 200, cy: 700, w: 280, h: 120, color1: '#f4d03f', color2: '#e6b030', name: 'beach' },
+            { cx: 550, cy: 480, w: 300, h: 130, color1: '#2d6a4f', color2: '#1b4332', name: 'jungle' },
+            { cx: 950, cy: 600, w: 260, h: 110, color1: '#4a3060', color2: '#2b2040', name: 'cave' },
+            { cx: 1300, cy: 400, w: 290, h: 140, color1: '#8b0000', color2: '#5a0000', name: 'volcano' },
+            { cx: 1050, cy: 200, w: 240, h: 100, color1: '#b0d4f1', color2: '#87ceeb', name: 'sky' },
+            { cx: 1600, cy: 150, w: 250, h: 105, color1: '#1b263b', color2: '#0d1b2a', name: 'space' }
+        ];
+
+        islands.forEach((isl, i) => {
+            ctx.save();
+
+            // Ocean ring / water shadow under island
+            const waterGlow = ctx.createRadialGradient(isl.cx, isl.cy + 15, isl.w * 0.3, isl.cx, isl.cy + 15, isl.w * 0.8);
+            waterGlow.addColorStop(0, 'rgba(0, 60, 100, 0.3)');
+            waterGlow.addColorStop(1, 'transparent');
+            ctx.fillStyle = waterGlow;
+            ctx.fillRect(isl.cx - isl.w, isl.cy - isl.h, isl.w * 2, isl.h * 2.5);
+
+            // Island base shape (irregular blob)
+            const iGrad = ctx.createRadialGradient(isl.cx - 20, isl.cy - 20, 0, isl.cx, isl.cy, isl.w * 0.55);
+            iGrad.addColorStop(0, isl.color1);
+            iGrad.addColorStop(0.7, isl.color2);
+            iGrad.addColorStop(1, isl.color2);
+            ctx.fillStyle = iGrad;
+
+            ctx.beginPath();
+            // Organic shape using bezier curves
+            const hw = isl.w * 0.5;
+            const hh = isl.h * 0.5;
+            ctx.moveTo(isl.cx - hw, isl.cy + hh * 0.2);
+            ctx.bezierCurveTo(
+                isl.cx - hw * 0.8, isl.cy - hh * 0.8,
+                isl.cx - hw * 0.3, isl.cy - hh * 1.1,
+                isl.cx, isl.cy - hh
+            );
+            ctx.bezierCurveTo(
+                isl.cx + hw * 0.4, isl.cy - hh * 1.15,
+                isl.cx + hw * 0.9, isl.cy - hh * 0.6,
+                isl.cx + hw, isl.cy + hh * 0.15
+            );
+            ctx.bezierCurveTo(
+                isl.cx + hw * 0.8, isl.cy + hh * 0.6,
+                isl.cx + hw * 0.2, isl.cy + hh * 0.7,
+                isl.cx, isl.cy + hh * 0.5
+            );
+            ctx.bezierCurveTo(
+                isl.cx - hw * 0.3, isl.cy + hh * 0.65,
+                isl.cx - hw * 0.7, isl.cy + hh * 0.55,
+                isl.cx - hw, isl.cy + hh * 0.2
+            );
+            ctx.fill();
+
+            // Shore line (lighter edge)
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+
+            // Highlight on top (3D depth)
+            ctx.save();
+            ctx.clip();
+            const hlGrad = ctx.createLinearGradient(isl.cx, isl.cy - hh, isl.cx, isl.cy);
+            hlGrad.addColorStop(0, 'rgba(255, 255, 255, 0.2)');
+            hlGrad.addColorStop(1, 'transparent');
+            ctx.fillStyle = hlGrad;
+            ctx.fillRect(isl.cx - hw, isl.cy - hh * 1.2, isl.w, isl.h * 0.7);
+            ctx.restore();
+
+            // Per-island decorative details
+            if (isl.name === 'beach') {
+                // Tiny palm trees
+                this._drawMiniPalmTree(ctx, isl.cx - 50, isl.cy - 40, 0.3);
+                this._drawMiniPalmTree(ctx, isl.cx + 40, isl.cy - 35, 0.25);
+            } else if (isl.name === 'jungle') {
+                // Mini trees
+                for (let j = 0; j < 4; j++) {
+                    const tx = isl.cx - 60 + j * 35;
+                    const ty = isl.cy - 50 + (j % 2) * 15;
+                    ctx.fillStyle = `hsl(${130 + j * 10}, 50%, ${28 + j * 4}%)`;
+                    ctx.beginPath();
+                    ctx.arc(tx, ty, 18 - j * 2, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            } else if (isl.name === 'volcano') {
+                // Mini volcano cone
+                ctx.fillStyle = '#3d0000';
+                ctx.beginPath();
+                ctx.moveTo(isl.cx - 35, isl.cy + 10);
+                ctx.lineTo(isl.cx, isl.cy - 55);
+                ctx.lineTo(isl.cx + 35, isl.cy + 10);
+                ctx.fill();
+                // Lava glow
+                const lGlow = ctx.createRadialGradient(isl.cx, isl.cy - 50, 2, isl.cx, isl.cy - 50, 30);
+                lGlow.addColorStop(0, 'rgba(255, 120, 0, 0.8)');
+                lGlow.addColorStop(1, 'transparent');
+                ctx.fillStyle = lGlow;
+                ctx.fillRect(isl.cx - 30, isl.cy - 80, 60, 60);
+            } else if (isl.name === 'cave') {
+                // Crystal glow
+                const cGlow = ctx.createRadialGradient(isl.cx, isl.cy - 20, 5, isl.cx, isl.cy - 20, 50);
+                cGlow.addColorStop(0, 'rgba(131, 56, 236, 0.5)');
+                cGlow.addColorStop(0.5, 'rgba(131, 56, 236, 0.15)');
+                cGlow.addColorStop(1, 'transparent');
+                ctx.fillStyle = cGlow;
+                ctx.fillRect(isl.cx - 50, isl.cy - 70, 100, 100);
+            } else if (isl.name === 'sky') {
+                // Mini clouds
+                ctx.fillStyle = 'rgba(255,255,255,0.6)';
+                ctx.beginPath();
+                ctx.arc(isl.cx - 20, isl.cy - 30, 15, 0, Math.PI * 2);
+                ctx.arc(isl.cx + 10, isl.cy - 35, 12, 0, Math.PI * 2);
+                ctx.arc(isl.cx + 35, isl.cy - 28, 10, 0, Math.PI * 2);
+                ctx.fill();
+            } else if (isl.name === 'space') {
+                // Mini stars
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+                for (let j = 0; j < 6; j++) {
+                    const sx = isl.cx - 40 + j * 18;
+                    const sy = isl.cy - 40 + (j * 11) % 30;
+                    const twinkle = 0.3 + Math.sin(t * 3 + j * 1.5) * 0.3;
+                    ctx.globalAlpha = twinkle;
+                    ctx.beginPath();
+                    ctx.arc(sx, sy, 2, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                ctx.globalAlpha = 1;
+            }
+
+            ctx.restore();
+        });
+    }
+
+    _drawMiniPalmTree(ctx, x, y, scale) {
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.scale(scale, scale);
+
+        // Trunk
+        ctx.fillStyle = '#8B6914';
+        ctx.fillRect(-3, -5, 6, 40);
+
+        // Leaves
+        ctx.fillStyle = '#2d8b2d';
+        ctx.beginPath();
+        ctx.arc(0, -10, 22, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#1a7a1a';
+        ctx.beginPath();
+        ctx.arc(-5, -15, 16, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.restore();
     }
 }
