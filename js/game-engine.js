@@ -61,6 +61,11 @@ class GameEngine {
         this._adaptiveLevel = 0;       // -2 to +2 adjustment
         this._sessionLevelsPlayed = 0;  // For session sticker tracking
 
+        // --- NEW: VS AI Mode ---
+        this.vsAI = new AIOpponent();
+        this.isVsAiMode = false;
+        this._vsAiProblem = null;
+
         // --- NEW: Achievement System ---
         this.achievements = this._initAchievements();
         this._loadAchievements();
@@ -103,6 +108,12 @@ class GameEngine {
                 this.renderer.drawIslandMap(this.progress);
                 break;
             case 'playing':
+                this._drawPlayingScene();
+                break;
+            case 'vsAiPlaying':
+                this._drawPlayingScene();
+                break;
+            case 'vsAiComplete':
                 this._drawPlayingScene();
                 break;
             case 'levelComplete':
@@ -1028,6 +1039,87 @@ class GameEngine {
 
     getUnlockedAchievements() {
         return Object.values(this.achievements).filter(a => a.unlocked);
+    }
+
+    // ---- VS AI Mode ----
+
+    startVsAiMatch(opponentId, difficulty) {
+        this.isVsAiMode = true;
+        difficulty = difficulty || this.settings.difficulty;
+        this.mathEngine.setDifficulty(difficulty);
+
+        // Pick a zone for the background (random or based on opponent)
+        const zoneNames = ['beach', 'jungle', 'cave', 'volcano', 'sky', 'space'];
+        this.currentZone = { id: zoneNames[Math.floor(Math.random() * zoneNames.length)] };
+
+        const matchInfo = this.vsAI.startMatch(opponentId, 10);
+
+        // Reset play state
+        this.score = 0;
+        this.correctCount = 0;
+        this.streak = 0;
+        this.bestStreak = 0;
+        this.isAnswering = false;
+
+        this.setState('vsAiPlaying');
+
+        return matchInfo;
+    }
+
+    generateVsAiProblem() {
+        // Generate a problem suitable for VS mode
+        // Use mixed types for variety
+        const types = ['addition', 'subtraction', 'multiplication', 'mixed'];
+        const type = types[Math.floor(Math.random() * types.length)];
+        // Use a moderate level range
+        const level = Math.min(5 + Math.floor(this.vsAI.currentRound / 3), 15);
+        this._vsAiProblem = this.mathEngine.generate(level, type);
+        return this._vsAiProblem;
+    }
+
+    getCurrentVsAiProblem() {
+        return this._vsAiProblem;
+    }
+
+    submitVsAiAnswer(answer) {
+        if (this.isAnswering || !this._vsAiProblem) return null;
+        this.isAnswering = true;
+
+        const problem = this._vsAiProblem;
+        const isCorrect = String(answer) === String(problem.answer);
+
+        const result = this.vsAI.playerAnswer(problem, answer, isCorrect);
+        if (!result) return null;
+
+        result.correct = isCorrect;
+        result.correctAnswer = problem.answer;
+        result.givenAnswer = answer;
+
+        if (isCorrect) {
+            this.correctCount++;
+            this.streak++;
+            if (this.streak > this.bestStreak) this.bestStreak = this.streak;
+            this._setCharacterMood('happy');
+        } else {
+            this.streak = 0;
+            this._setCharacterMood('sad');
+        }
+
+        return result;
+    }
+
+    endVsAiRound(playerWonRound) {
+        this.isAnswering = false;
+        return this.vsAI.endRound(playerWonRound);
+    }
+
+    endVsAiMatch() {
+        this.isVsAiMode = false;
+        const results = this.vsAI.getMatchResults();
+        this.vsAI.saveStats();
+        this.setState('vsAiComplete');
+        this._setCharacterMood(results.playerWon ? 'celebrate' : 'sad');
+        return results;
     }
 
     // ---- Settings ----

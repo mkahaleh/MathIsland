@@ -744,6 +744,42 @@ class AudioManager {
         });
     }
 
+    // VS AI - player wins round: triumphant quick blast
+    playVsAiPlayerWin() {
+        if (!this.ctx || !this.sfxEnabled) return;
+        var self = this;
+        var notes = [659.25, 783.99, 1046.50]; // E5, G5, C6
+        notes.forEach(function(f, i) {
+            setTimeout(function() {
+                self.playNote(f, 0.2, 'sine');
+                self.playNote(f * 1.5, 0.15, 'triangle');
+            }, i * 80);
+        });
+    }
+
+    // VS AI - AI wins round: tension/urgency
+    playVsAiAiWin() {
+        if (!this.ctx || !this.sfxEnabled) return;
+        var now = this.ctx.currentTime;
+        var osc = this.ctx.createOscillator();
+        var gain = this.ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(500, now);
+        osc.frequency.exponentialRampToValueAtTime(300, now + 0.3);
+        gain.gain.setValueAtTime(0.2, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
+        osc.connect(gain);
+        gain.connect(this.sfxGain);
+        osc.start(now);
+        osc.stop(now + 0.35);
+    }
+
+    // VS AI - match won: big celebration
+    playVsAiVictory() {
+        if (!this.ctx || !this.sfxEnabled) return;
+        this.playFanfare();
+    }
+
     // Navigation tick sound - subtle click for TV remote navigation
     playNavTick() {
         if (!this.ctx || !this.sfxEnabled) return;

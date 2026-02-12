@@ -129,6 +129,15 @@ class InputHandler {
             case 'parentStats':
                 this._handleParentStatsInput(code);
                 break;
+            case 'vsaiSelect':
+                this._handleVsAiSelectInput(code);
+                break;
+            case 'vsaiHud':
+                this._handleVsAiHudInput(code);
+                break;
+            case 'vsaiComplete':
+                this._handleVsAiCompleteInput(code);
+                break;
         }
     }
 
@@ -255,6 +264,15 @@ class InputHandler {
                 break;
             case 'parentStats':
                 this.ui._handleAction('back-to-settings');
+                break;
+            case 'vsaiSelect':
+                this.ui._handleAction('vsai-back-to-menu');
+                break;
+            case 'vsaiHud':
+                this.ui._handleAction('vsai-quit');
+                break;
+            case 'vsaiComplete':
+                this.ui._handleAction('vsai-back-to-menu-end');
                 break;
         }
         audio.playSelect();
@@ -545,6 +563,117 @@ class InputHandler {
             case this.keys.S:
                 this._navigateFocusables('next');
                 break;
+        }
+    }
+
+    _handleVsAiSelectInput(code) {
+        switch (code) {
+            case this.keys.LEFT:
+            case this.keys.A:
+                this._navigateFocusables('left');
+                break;
+            case this.keys.RIGHT:
+            case this.keys.D:
+                this._navigateFocusables('right');
+                break;
+            case this.keys.UP:
+            case this.keys.W:
+                this._navigateFocusables('up');
+                break;
+            case this.keys.DOWN:
+            case this.keys.S:
+                this._navigateFocusables('down');
+                break;
+            case this.keys.ENTER:
+            case this.keys.SPACE:
+                this._activateFocused();
+                break;
+        }
+    }
+
+    _handleVsAiHudInput(code) {
+        if (this.game.isAnswering) return;
+
+        switch (code) {
+            case this.keys.LEFT:
+            case this.keys.A:
+                this._navigateFocusables('left');
+                break;
+            case this.keys.RIGHT:
+            case this.keys.D:
+                this._navigateFocusables('right');
+                break;
+            case this.keys.UP:
+            case this.keys.W:
+                this._navigateFocusables('up');
+                break;
+            case this.keys.DOWN:
+            case this.keys.S:
+                this._navigateFocusables('down');
+                break;
+            case this.keys.ENTER:
+            case this.keys.SPACE:
+                this._activateFocused();
+                break;
+            // Quick answer with number keys
+            case this.keys.ONE:
+                this._selectVsAiAnswerByIndex(0);
+                break;
+            case this.keys.TWO:
+                this._selectVsAiAnswerByIndex(1);
+                break;
+            case this.keys.THREE:
+                this._selectVsAiAnswerByIndex(2);
+                break;
+            case this.keys.FOUR:
+                this._selectVsAiAnswerByIndex(3);
+                break;
+            // Color buttons for Samsung remote
+            case this.keys.RED:
+                this._selectVsAiAnswerByIndex(0);
+                break;
+            case this.keys.GREEN:
+                this._selectVsAiAnswerByIndex(1);
+                break;
+            case this.keys.YELLOW:
+                this._selectVsAiAnswerByIndex(2);
+                break;
+            case this.keys.BLUE:
+                this._selectVsAiAnswerByIndex(3);
+                break;
+        }
+    }
+
+    _handleVsAiCompleteInput(code) {
+        switch (code) {
+            case this.keys.LEFT:
+            case this.keys.A:
+                this._navigateFocusables('left');
+                break;
+            case this.keys.RIGHT:
+            case this.keys.D:
+                this._navigateFocusables('right');
+                break;
+            case this.keys.UP:
+            case this.keys.W:
+                this._navigateFocusables('up');
+                break;
+            case this.keys.DOWN:
+            case this.keys.S:
+                this._navigateFocusables('down');
+                break;
+            case this.keys.ENTER:
+            case this.keys.SPACE:
+                this._activateFocused();
+                break;
+        }
+    }
+
+    _selectVsAiAnswerByIndex(index) {
+        const btns = document.querySelectorAll('.vsai-answer-btn');
+        if (btns[index]) {
+            btns[index].focus();
+            btns[index].click();
         }
     }
 

@@ -3657,3 +3657,520 @@ button:focus-visible,
     0%, 100% { filter: brightness(1.1); }
     50% { filter: brightness(1.3); }
 }
+
+/* ========================================
+   VS AI MODE STYLES
+   ======================================== */
+
+/* ---- VS AI Menu Button ---- */
+.btn-vsai {
+    background: linear-gradient(180deg, #ff6b6b 0%, #ee5a24 100%) !important;
+    border: 3px solid rgba(255,255,255,0.3) !important;
+}
+
+/* ---- Opponent Select Screen ---- */
+.vsai-opponents {
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    padding: 40px 60px;
+    margin-top: 20px;
+}
+
+.vsai-opponent-card {
+    width: 260px;
+    height: 300px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.15), rgba(255,255,255,0.05));
+    border: 4px solid rgba(255,255,255,0.2);
+    border-radius: 30px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    cursor: pointer;
+    transition: all 0.3s var(--bounce);
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 8px 0 rgba(0,0,0,0.2), 0 12px 30px rgba(0,0,0,0.2);
+}
+
+.vsai-opponent-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 50%;
+    background: linear-gradient(180deg, rgba(255,255,255,0.2), transparent);
+    border-radius: 26px 26px 0 0;
+    pointer-events: none;
+}
+
+.vsai-opponent-card:focus,
+.vsai-opponent-card:hover {
+    transform: translateY(-8px) scale(1.05);
+    border-color: var(--gold);
+    box-shadow: 0 12px 0 rgba(0,0,0,0.2), 0 20px 40px rgba(255,215,0,0.3);
+}
+
+.vsai-opponent-card.selected {
+    border-color: var(--gold);
+    background: linear-gradient(180deg, rgba(255,215,0,0.2), rgba(255,165,0,0.1));
+}
+
+.vsai-opp-emoji {
+    font-size: 100px;
+    filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
+    transition: transform 0.3s var(--bounce);
+}
+
+.vsai-opponent-card:focus .vsai-opp-emoji,
+.vsai-opponent-card:hover .vsai-opp-emoji {
+    transform: scale(1.15) rotate(-5deg);
+    animation: vsaiOppBounce 0.6s var(--bounce);
+}
+
+@keyframes vsaiOppBounce {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.25) rotate(5deg); }
+    100% { transform: scale(1.15) rotate(-5deg); }
+}
+
+.vsai-opp-card-name {
+    font-size: 24px;
+    font-weight: 800;
+    color: white;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.4);
+    letter-spacing: 1px;
+}
+
+.vsai-opponent-info {
+    text-align: center;
+    margin: 20px 0;
+    min-height: 60px;
+}
+
+.vsai-opp-name {
+    display: block;
+    font-size: 36px;
+    font-weight: 800;
+    color: var(--gold);
+    text-shadow: 0 3px 6px rgba(0,0,0,0.4);
+    margin-bottom: 8px;
+}
+
+.vsai-opp-desc {
+    display: block;
+    font-size: 22px;
+    color: rgba(255,255,255,0.8);
+}
+
+/* ---- VS AI Battle HUD ---- */
+.vsai-battle-header {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 60px;
+    padding: 30px 40px 20px;
+    position: relative;
+    z-index: 5;
+}
+
+.vsai-player-side,
+.vsai-ai-side {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    min-width: 180px;
+}
+
+.vsai-avatar {
+    font-size: 72px;
+    width: 110px;
+    height: 110px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(180deg, rgba(255,255,255,0.2), rgba(255,255,255,0.05));
+    border-radius: 50%;
+    border: 4px solid rgba(255,255,255,0.3);
+    box-shadow: 0 6px 0 rgba(0,0,0,0.2), 0 8px 20px rgba(0,0,0,0.2);
+}
+
+.vsai-player-side .vsai-avatar {
+    border-color: var(--grass-green);
+    box-shadow: 0 6px 0 rgba(6,214,160,0.3), 0 0 20px rgba(6,214,160,0.2);
+}
+
+.vsai-ai-side .vsai-avatar {
+    border-color: var(--coral-red);
+    box-shadow: 0 6px 0 rgba(239,71,111,0.3), 0 0 20px rgba(239,71,111,0.2);
+}
+
+.vsai-name {
+    font-size: 22px;
+    font-weight: 700;
+    color: white;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.4);
+}
+
+.vsai-score-big {
+    font-size: 64px;
+    font-weight: 900;
+    color: var(--gold);
+    text-shadow: 0 4px 8px rgba(0,0,0,0.4), 0 0 20px rgba(255,215,0,0.3);
+    transition: transform 0.3s var(--bounce);
+}
+
+.vsai-score-big.score-pop {
+    animation: scorePop 0.4s var(--bounce);
+}
+
+@keyframes scorePop {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.3); }
+    100% { transform: scale(1); }
+}
+
+.vsai-vs-badge {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 120px;
+    height: 120px;
+    background: linear-gradient(180deg, #ff6b6b, #ee5a24);
+    border-radius: 50%;
+    border: 5px solid rgba(255,255,255,0.3);
+    box-shadow: 0 8px 0 rgba(0,0,0,0.25), 0 0 30px rgba(255,107,107,0.3);
+    position: relative;
+}
+
+.vsai-vs-badge::before {
+    content: 'VS';
+    position: absolute;
+    top: -22px;
+    font-size: 22px;
+    font-weight: 900;
+    color: white;
+    text-shadow: 0 2px 6px rgba(0,0,0,0.5);
+    letter-spacing: 3px;
+}
+
+.vsai-round-num {
+    font-size: 42px;
+    font-weight: 900;
+    color: white;
+    text-shadow: 0 2px 6px rgba(0,0,0,0.4);
+    line-height: 1;
+}
+
+.vsai-round-of {
+    font-size: 18px;
+    color: rgba(255,255,255,0.7);
+    font-weight: 600;
+}
+
+/* ---- AI Thinking Progress ---- */
+.vsai-ai-progress-container {
+    display: flex;
+    justify-content: center;
+    padding: 10px 40px;
+    z-index: 5;
+    position: relative;
+}
+
+.vsai-ai-thinking {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 12px 30px;
+    background: rgba(0,0,0,0.4);
+    border-radius: 50px;
+    border: 3px solid rgba(255,255,255,0.15);
+    min-width: 400px;
+    opacity: 0;
+    transform: translateY(-10px);
+    transition: all 0.3s var(--smooth);
+}
+
+.vsai-ai-thinking.active {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.vsai-thinking-emoji {
+    font-size: 36px;
+    animation: vsaiThinkBob 1s ease-in-out infinite;
+}
+
+@keyframes vsaiThinkBob {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-5px); }
+}
+
+.vsai-thinking-text {
+    font-size: 18px;
+    font-weight: 700;
+    color: rgba(255,255,255,0.8);
+    min-width: 110px;
+}
+
+.vsai-thinking-bar {
+    flex: 1;
+    height: 14px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 7px;
+    overflow: hidden;
+    position: relative;
+}
+
+.vsai-thinking-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #6c5ce7, #a29bfe);
+    border-radius: 7px;
+    transition: width 0.1s linear, background 0.3s ease;
+    position: relative;
+}
+
+.vsai-thinking-fill::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 30px;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4));
+    border-radius: 0 7px 7px 0;
+}
+
+.vsai-ai-thinking.ai-answered-correct {
+    border-color: var(--grass-green);
+    background: rgba(6,214,160,0.2);
+}
+
+.vsai-ai-thinking.ai-answered-correct .vsai-thinking-fill {
+    background: linear-gradient(90deg, var(--grass-green), #00e676) !important;
+}
+
+.vsai-ai-thinking.ai-answered-wrong {
+    border-color: var(--coral-red);
+    background: rgba(239,71,111,0.2);
+}
+
+.vsai-ai-thinking.ai-answered-wrong .vsai-thinking-fill {
+    background: linear-gradient(90deg, var(--coral-red), #ff5252) !important;
+}
+
+/* ---- VS AI Problem Area ---- */
+.vsai-problem-container {
+    display: flex;
+    justify-content: center;
+    padding: 20px 40px;
+    z-index: 5;
+    position: relative;
+}
+
+.vsai-bubble {
+    max-width: 900px;
+    width: 100%;
+    padding: 30px 50px 40px;
+}
+
+.vsai-problem-text {
+    font-size: 42px;
+    font-weight: 800;
+    color: white;
+    text-align: center;
+    text-shadow: 0 3px 6px rgba(0,0,0,0.4);
+    margin-bottom: 30px;
+}
+
+.vsai-problem-text .highlight {
+    color: var(--gold);
+    font-size: 48px;
+}
+
+.vsai-answers {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.vsai-answer-btn {
+    font-size: 32px !important;
+    padding: 18px 24px !important;
+}
+
+/* ---- Round Result Overlay ---- */
+.vsai-round-result {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0,0,0,0.6);
+    z-index: 20;
+    animation: vsaiResultIn 0.3s var(--bounce);
+}
+
+@keyframes vsaiResultIn {
+    from { opacity: 0; transform: scale(0.8); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+.vsai-round-result.player-won {
+    background: radial-gradient(ellipse at center, rgba(6,214,160,0.3), rgba(0,0,0,0.6));
+}
+
+.vsai-round-result.ai-won {
+    background: radial-gradient(ellipse at center, rgba(239,71,111,0.2), rgba(0,0,0,0.6));
+}
+
+.vsai-result-icon {
+    font-size: 100px;
+    margin-bottom: 20px;
+    filter: drop-shadow(0 4px 12px rgba(0,0,0,0.4));
+    animation: vsaiResultBounce 0.5s var(--bounce);
+}
+
+@keyframes vsaiResultBounce {
+    0% { transform: scale(0) rotate(-20deg); }
+    50% { transform: scale(1.2) rotate(5deg); }
+    100% { transform: scale(1) rotate(0deg); }
+}
+
+.vsai-result-text {
+    font-size: 36px;
+    font-weight: 800;
+    color: white;
+    text-shadow: 0 3px 8px rgba(0,0,0,0.5);
+    margin-bottom: 10px;
+}
+
+.vsai-result-taunt {
+    font-size: 24px;
+    color: rgba(255,255,255,0.7);
+    font-style: italic;
+}
+
+/* VS AI Pause button */
+.vsai-pause {
+    position: absolute;
+    top: 20px;
+    right: 30px;
+    z-index: 15;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    font-size: 28px;
+    background: rgba(0,0,0,0.4);
+    border: 3px solid rgba(255,255,255,0.2);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.vsai-pause:focus {
+    border-color: var(--gold);
+    box-shadow: 0 0 15px rgba(255,215,0,0.4);
+}
+
+/* ---- VS AI Match Complete Screen ---- */
+.vsai-complete-container {
+    text-align: center;
+    padding: 40px;
+}
+
+.vsai-complete-title {
+    font-size: 60px;
+    font-weight: 900;
+    color: var(--gold);
+    text-shadow: 0 4px 10px rgba(0,0,0,0.5), 0 0 30px rgba(255,215,0,0.3);
+    margin-bottom: 30px;
+    animation: vsaiTitlePulse 2s ease-in-out infinite;
+}
+
+@keyframes vsaiTitlePulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.03); }
+}
+
+.vsai-final-scores {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 50px;
+    margin-bottom: 30px;
+}
+
+.vsai-final-player,
+.vsai-final-ai {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+
+.vsai-final-avatar {
+    font-size: 80px;
+    width: 130px;
+    height: 130px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(180deg, rgba(255,255,255,0.15), rgba(255,255,255,0.05));
+    border-radius: 50%;
+    border: 5px solid rgba(255,255,255,0.3);
+    box-shadow: 0 8px 0 rgba(0,0,0,0.2);
+}
+
+.vsai-final-name {
+    font-size: 24px;
+    font-weight: 700;
+    color: white;
+}
+
+.vsai-final-score {
+    font-size: 72px;
+    font-weight: 900;
+    color: var(--gold);
+    text-shadow: 0 4px 10px rgba(0,0,0,0.4);
+}
+
+.vsai-final-vs {
+    font-size: 36px;
+    font-weight: 900;
+    color: rgba(255,255,255,0.5);
+    text-shadow: 0 2px 6px rgba(0,0,0,0.4);
+}
+
+.vsai-complete-message {
+    font-size: 28px;
+    font-weight: 700;
+    color: white;
+    text-shadow: 0 2px 6px rgba(0,0,0,0.4);
+    margin-bottom: 20px;
+    padding: 0 80px;
+}
+
+.vsai-complete-stats {
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    font-size: 22px;
+    color: rgba(255,255,255,0.8);
+    margin-bottom: 30px;
+}
+
+.vsai-complete-stats strong {
+    color: var(--gold);
+}

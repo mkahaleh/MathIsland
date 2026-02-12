@@ -39,8 +39,12 @@
                         <span class="btn-icon">📖</span>
                         <span class="btn-text">Continue</span>
                     </button>
+                    <button class="menu-btn btn-vsai" data-action="vs-ai">
+                        <span class="btn-icon">\u{1F916}</span>
+                        <span class="btn-text">VS Robot</span>
+                    </button>
                     <button class="menu-btn btn-daily" data-action="daily-challenge" id="btn-daily-challenge">
-                        <span class="btn-icon">⚡</span>
+                        <span class="btn-icon">\u26A1</span>
                         <span class="btn-text">Daily Challenge</span>
                     </button>
                     <button class="menu-btn btn-achievements" data-action="achievements">
@@ -277,6 +281,99 @@
                 <button class="menu-btn btn-back" data-action="back-to-settings">Back</button>
             </div>
 
+            <!-- VS AI: Opponent Select -->
+            <div id="vsai-select" class="screen">
+                <h2 class="screen-title">\u{1F916} Choose Your Opponent!</h2>
+                <div class="vsai-opponents" id="vsai-opponents"></div>
+                <div class="vsai-opponent-info" id="vsai-opponent-info">
+                    <span class="vsai-opp-name" id="vsai-opp-name">Select an opponent</span>
+                    <span class="vsai-opp-desc" id="vsai-opp-desc"></span>
+                </div>
+                <div class="select-actions">
+                    <button class="menu-btn btn-back" data-action="vsai-back-to-menu">Back</button>
+                    <button class="menu-btn btn-confirm" data-action="vsai-start-match">Battle!</button>
+                </div>
+            </div>
+
+            <!-- VS AI: Battle HUD -->
+            <div id="vsai-hud" class="screen">
+                <div class="vsai-battle-header">
+                    <div class="vsai-player-side">
+                        <div class="vsai-avatar" id="vsai-player-avatar"></div>
+                        <div class="vsai-name">You</div>
+                        <div class="vsai-score-big" id="vsai-player-score">0</div>
+                    </div>
+                    <div class="vsai-vs-badge">
+                        <span class="vsai-round-num" id="vsai-round-num">1</span>
+                        <span class="vsai-round-of">/ 10</span>
+                    </div>
+                    <div class="vsai-ai-side">
+                        <div class="vsai-avatar" id="vsai-ai-avatar"></div>
+                        <div class="vsai-name" id="vsai-ai-name">Robot</div>
+                        <div class="vsai-score-big" id="vsai-ai-score">0</div>
+                    </div>
+                </div>
+
+                <!-- AI thinking progress -->
+                <div class="vsai-ai-progress-container">
+                    <div class="vsai-ai-thinking" id="vsai-ai-thinking">
+                        <span class="vsai-thinking-emoji" id="vsai-thinking-emoji">\u{1F916}</span>
+                        <span class="vsai-thinking-text" id="vsai-thinking-text">Thinking...</span>
+                        <div class="vsai-thinking-bar">
+                            <div class="vsai-thinking-fill" id="vsai-thinking-fill"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Problem area (reuses similar layout to regular HUD) -->
+                <div class="vsai-problem-container" id="vsai-problem-container">
+                    <div class="problem-bubble vsai-bubble">
+                        <div class="vsai-problem-text" id="vsai-problem-text"></div>
+                        <div class="answer-options vsai-answers" id="vsai-answer-options"></div>
+                    </div>
+                </div>
+
+                <!-- Round result overlay -->
+                <div class="vsai-round-result" id="vsai-round-result" style="display:none">
+                    <div class="vsai-result-icon" id="vsai-result-icon"></div>
+                    <div class="vsai-result-text" id="vsai-result-text"></div>
+                    <div class="vsai-result-taunt" id="vsai-result-taunt"></div>
+                </div>
+
+                <!-- Pause button -->
+                <button class="hud-btn hud-pause-btn vsai-pause" data-action="vsai-quit">\u274C</button>
+            </div>
+
+            <!-- VS AI: Match Complete -->
+            <div id="vsai-complete" class="screen">
+                <div class="vsai-complete-container">
+                    <h2 class="vsai-complete-title" id="vsai-complete-title">Match Over!</h2>
+                    <div class="vsai-final-scores">
+                        <div class="vsai-final-player">
+                            <div class="vsai-final-avatar" id="vsai-final-player-avatar"></div>
+                            <div class="vsai-final-name">You</div>
+                            <div class="vsai-final-score" id="vsai-final-player-score">0</div>
+                        </div>
+                        <div class="vsai-final-vs">VS</div>
+                        <div class="vsai-final-ai">
+                            <div class="vsai-final-avatar" id="vsai-final-ai-avatar"></div>
+                            <div class="vsai-final-name" id="vsai-final-ai-name">Robot</div>
+                            <div class="vsai-final-score" id="vsai-final-ai-score">0</div>
+                        </div>
+                    </div>
+                    <div class="vsai-complete-message" id="vsai-complete-message"></div>
+                    <div class="vsai-complete-stats">
+                        <span>\u{1F525} Best Streak: <strong id="vsai-final-streak">0</strong></span>
+                        <span>\u2705 Accuracy: <strong id="vsai-final-accuracy">0%</strong></span>
+                    </div>
+                    <div class="complete-actions">
+                        <button class="menu-btn btn-replay" data-action="vsai-rematch">Rematch</button>
+                        <button class="menu-btn btn-back" data-action="vsai-change-opponent">New Opponent</button>
+                        <button class="menu-btn btn-map" data-action="vsai-back-to-menu-end">Menu</button>
+                    </div>
+                </div>
+            </div>
+
             <!-- Settings -->
             <div id="settings-screen" class="screen">
                 <h2 class="screen-title">Settings</h2>
@@ -356,6 +453,7 @@
     <script src="js/math-engine.js"></script>
     <script src="js/levels.js"></script>
     <script src="js/rewards.js"></script>
+    <script src="js/ai-opponent.js"></script>
     <script src="js/island-renderer.js"></script>
     <script src="js/game-engine.js"></script>
     <script src="js/ui-manager.js"></script>

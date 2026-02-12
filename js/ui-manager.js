@@ -17,7 +17,10 @@ class UIManager {
             achievements: document.getElementById('achievements-screen'),
             settings: document.getElementById('settings-screen'),
             stickers: document.getElementById('sticker-screen'),
-            parentStats: document.getElementById('parent-stats-screen')
+            parentStats: document.getElementById('parent-stats-screen'),
+            vsaiSelect: document.getElementById('vsai-select'),
+            vsaiHud: document.getElementById('vsai-hud'),
+            vsaiComplete: document.getElementById('vsai-complete')
         };
 
         this.currentScreen = 'menu';
@@ -59,7 +62,7 @@ class UIManager {
 
     showScreen(name) {
         const prevScreen = this.currentScreen;
-        const screenOrder = ['menu', 'tutorial', 'characterSelect', 'levelSelect', 'hud', 'pause', 'complete', 'achievements', 'stickers', 'parentStats', 'settings'];
+        const screenOrder = ['menu', 'tutorial', 'characterSelect', 'levelSelect', 'hud', 'pause', 'complete', 'achievements', 'stickers', 'parentStats', 'vsaiSelect', 'vsaiHud', 'vsaiComplete', 'settings'];
         const prevIndex = screenOrder.indexOf(prevScreen);
         const nextIndex = screenOrder.indexOf(name);
         const goingForward = nextIndex >= prevIndex;
@@ -1640,6 +1643,418 @@ class UIManager {
         this._processStickerQueue();
     }
 
+    // ---- VS AI Mode UI ----
+
+    showVsAiSelect() {
+        const container = document.getElementById('vsai-opponents');
+        if (!container) return;
+
+        container.innerHTML = '';
+        const opponents = this.game.vsAI.getOpponents();
+
+        opponents.forEach((opp, index) => {
+            const card = document.createElement('div');
+            card.className = 'vsai-opponent-card';
+            card.setAttribute('tabindex', '0');
+            card.setAttribute('data-opponent-id', opp.id);
+            card.setAttribute('data-index', index);
+
+            card.innerHTML = `
+                <div class="vsai-opp-emoji">${opp.emoji}</div>
+                <div class="vsai-opp-card-name">${opp.name}</div>
+            `;
+
+            card.addEventListener('focus', () => this._onVsAiOpponentFocus(opp));
+            card.addEventListener('click', () => this._onVsAiOpponentClick(opp));
+            container.appendChild(card);
+        });
+
+        this._selectedVsAiOpponent = opponents[0];
+        this.showScreen('vsaiSelect');
+
+        setTimeout(() => {
+            const firstCard = container.querySelector('.vsai-opponent-card');
+            if (firstCard) firstCard.focus();
+        }, 300);
+    }
+
+    _onVsAiOpponentFocus(opponent) {
+        this._selectedVsAiOpponent = opponent;
+        const nameEl = document.getElementById('vsai-opp-name');
+        const descEl = document.getElementById('vsai-opp-desc');
+        if (nameEl) nameEl.textContent = `${opponent.emoji} ${opponent.name}`;
+        if (descEl) descEl.textContent = opponent.description;
+
+        // Update visual selection
+        document.querySelectorAll('.vsai-opponent-card').forEach(c => {
+            c.classList.toggle('selected', c.dataset.opponentId === opponent.id);
+        });
+        audio.playNavigate();
+    }
+
+    _onVsAiOpponentClick(opponent) {
+        this._selectedVsAiOpponent = opponent;
+        this._onVsAiOpponentFocus(opponent);
+        audio.playSelect();
+    }
+
+    startVsAiMatch() {
+        if (!this._selectedVsAiOpponent) return;
+
+        const matchInfo = this.game.startVsAiMatch(
+            this._selectedVsAiOpponent.id,
+            this.game.settings.difficulty
+        );
+
+        // Set up player avatar
+        const playerAvatar = document.getElementById('vsai-player-avatar');
+        if (playerAvatar && this.game.selectedCharacter) {
+            playerAvatar.textContent = this.game.selectedCharacter.emoji;
+        } else if (playerAvatar) {
+            playerAvatar.textContent = '\u{1F9D2}';
+        }
+
+        // Set up AI avatar
+        const aiAvatar = document.getElementById('vsai-ai-avatar');
+        const aiName = document.getElementById('vsai-ai-name');
+        if (aiAvatar) aiAvatar.textContent = matchInfo.opponent.emoji;
+        if (aiName) aiName.textContent = matchInfo.opponent.name;
+
+        // Set thinking emoji
+        const thinkEmoji = document.getElementById('vsai-thinking-emoji');
+        if (thinkEmoji) thinkEmoji.textContent = matchInfo.opponent.emoji;
+
+        // Reset scores
+        this._updateVsAiScores(0, 0, 1, matchInfo.totalRounds);
+
+        // Track total rounds answered for accuracy
+        this._vsAiTotalRounds = 0;
+        this._vsAiCorrectAnswers = 0;
+
+        this.showScreen('vsaiHud');
+
+        // Show countdown then start first round
+        this._showCountdown(() => {
+            this._startVsAiRound();
+            audio.resume();
+            audio.startMusic();
+        });
+    }
+
+    _startVsAiRound() {
+        const problem = this.game.generateVsAiProblem();
+        const roundInfo = this.game.vsAI.startRound(problem);
+
+        // Show round number
+        this._updateVsAiScores(
+            this.game.vsAI.playerScore,
+            this.game.vsAI.aiScore,
+            this.game.vsAI.currentRound,
+            this.game.vsAI.totalRounds
+        );
+
+        // Show problem
+        const problemText = document.getElementById('vsai-problem-text');
+        if (problemText) problemText.innerHTML = problem.questionHtml || problem.question;
+
+        // Show answer options
+        const options = document.getElementById('vsai-answer-options');
+        if (options) {
+            options.innerHTML = '';
+            this.selectedAnswerIndex = 0;
+
+            problem.options.forEach((opt, i) => {
+                const btn = document.createElement('button');
+                btn.className = 'answer-btn vsai-answer-btn';
+                btn.textContent = opt;
+                btn.setAttribute('tabindex', '0');
+                btn.setAttribute('data-answer', opt);
+                btn.setAttribute('data-index', i);
+
+                btn.addEventListener('focus', () => {
+                    this.selectedAnswerIndex = i;
+                    audio.playNavigate();
+                });
+                btn.addEventListener('click', () => this._onVsAiAnswerClick(opt, btn));
+                options.appendChild(btn);
+            });
+
+            // Focus first option
+            setTimeout(() => {
+                const firstBtn = options.querySelector('.vsai-answer-btn');
+                if (firstBtn) firstBtn.focus();
+            }, 200);
+        }
+
+        // Show AI thinking
+        const thinking = document.getElementById('vsai-ai-thinking');
+        const thinkText = document.getElementById('vsai-thinking-text');
+        if (thinking) thinking.classList.add('active');
+        if (thinkText) thinkText.textContent = 'Thinking...';
+
+        // Hide round result
+        const roundResult = document.getElementById('vsai-round-result');
+        if (roundResult) roundResult.style.display = 'none';
+
+        // Start AI thinking progress animation
+        this._vsAiProgressLoop = setInterval(() => {
+            const fill = document.getElementById('vsai-thinking-fill');
+            if (fill && this.game.vsAI) {
+                fill.style.width = `${this.game.vsAI.aiProgressPercent}%`;
+
+                // Color changes as AI gets closer
+                const pct = this.game.vsAI.aiProgressPercent;
+                if (pct > 80) {
+                    fill.style.background = 'linear-gradient(90deg, #ff6b6b, #ee5a24)';
+                    if (thinkText) thinkText.textContent = 'Almost there!';
+                } else if (pct > 50) {
+                    fill.style.background = 'linear-gradient(90deg, #ffd93d, #ff6b6b)';
+                    if (thinkText) thinkText.textContent = 'Hmm...';
+                } else {
+                    fill.style.background = 'linear-gradient(90deg, #6c5ce7, #a29bfe)';
+                    if (thinkText) thinkText.textContent = 'Thinking...';
+                }
+            }
+        }, 60);
+
+        // Listen for AI answer
+        this._vsAiAnswerHandler = (e) => {
+            this._onAiAnswered(e.detail);
+        };
+        document.addEventListener('ai-answered', this._vsAiAnswerHandler, { once: true });
+    }
+
+    _onVsAiAnswerClick(answer, btnElement) {
+        if (this.game.isAnswering) return;
+
+        const result = this.game.submitVsAiAnswer(answer);
+        if (!result) return;
+
+        this._vsAiTotalRounds++;
+
+        // Visual feedback
+        if (result.correct) {
+            btnElement.classList.add('correct');
+            audio.playCorrect();
+            this._vsAiCorrectAnswers++;
+
+            if (result.playerWonRound) {
+                // Player answered first and correctly!
+                this._showVsAiRoundResult(true, 'You got it first!', '');
+            } else if (result.aiHasAnswered) {
+                // Both answered, player was correct but AI was faster
+                this._showVsAiRoundResult(false, 'Correct, but AI was faster!', '');
+            }
+            // If AI hasn't answered yet and player is correct, wait is handled by playerWonRound
+        } else {
+            btnElement.classList.add('wrong');
+            audio.playWrong();
+
+            // Highlight correct answer
+            document.querySelectorAll('.vsai-answer-btn').forEach(b => {
+                if (String(b.getAttribute('data-answer')) === String(result.correctAnswer)) {
+                    b.classList.add('correct');
+                }
+            });
+
+            if (result.aiHasAnswered) {
+                // Both have answered - check if AI already won or if both got it wrong
+                this._showVsAiRoundResult(false, 'Not quite!', '');
+                // End round - no one gets a point for this one
+                this._endVsAiRound(false);
+                return;
+            }
+            // If AI hasn't answered yet, let it continue
+        }
+
+        if (result.playerWonRound !== undefined) {
+            this._endVsAiRound(result.playerWonRound);
+        }
+    }
+
+    _onAiAnswered(detail) {
+        clearInterval(this._vsAiProgressLoop);
+
+        // Update AI thinking display
+        const thinking = document.getElementById('vsai-ai-thinking');
+        const thinkText = document.getElementById('vsai-thinking-text');
+        const fill = document.getElementById('vsai-thinking-fill');
+        if (fill) fill.style.width = '100%';
+
+        if (detail.aiCorrect) {
+            if (thinking) thinking.classList.add('ai-answered-correct');
+            if (thinkText) thinkText.textContent = 'Got it!';
+        } else {
+            if (thinking) thinking.classList.add('ai-answered-wrong');
+            if (thinkText) thinkText.textContent = 'Oops!';
+        }
+
+        if (!this.game.vsAI.playerHasAnswered) {
+            // Player hasn't answered yet
+            if (detail.aiCorrect) {
+                audio.playVsAiAiWin();
+                this._showVsAiRoundResult(false, `${this.game.vsAI.currentOpponent.emoji} beat you!`, detail.taunt || '');
+                this._endVsAiRound(false);
+            } else {
+                // AI got it wrong - player still has a chance!
+                if (thinkText) thinkText.textContent = 'Wrong answer!';
+                // Don't end round yet - player can still answer
+            }
+        } else {
+            // Player already answered (and was wrong, since correct would have ended the round)
+            // Now AI also answered - end the round, nobody wins
+            if (detail.aiCorrect) {
+                this._showVsAiRoundResult(false, `${this.game.vsAI.currentOpponent.emoji} got it!`, detail.taunt || '');
+                // AI gets the point since it was correct
+                this.game.vsAI.aiScore++;
+            } else {
+                this._showVsAiRoundResult(false, 'Neither got it right!', '');
+            }
+            this._endVsAiRound(false);
+        }
+    }
+
+    _showVsAiRoundResult(playerWon, text, taunt) {
+        const overlay = document.getElementById('vsai-round-result');
+        const icon = document.getElementById('vsai-result-icon');
+        const textEl = document.getElementById('vsai-result-text');
+        const tauntEl = document.getElementById('vsai-result-taunt');
+
+        if (!overlay) return;
+
+        overlay.style.display = 'flex';
+        if (icon) icon.textContent = playerWon ? '\u{1F389}' : '\u{1F914}';
+        if (textEl) textEl.textContent = text;
+        if (tauntEl) tauntEl.textContent = taunt;
+
+        overlay.className = `vsai-round-result ${playerWon ? 'player-won' : 'ai-won'}`;
+    }
+
+    _endVsAiRound(playerWonRound) {
+        // Clean up listeners and timers
+        clearInterval(this._vsAiProgressLoop);
+        if (this._vsAiAnswerHandler) {
+            document.removeEventListener('ai-answered', this._vsAiAnswerHandler);
+        }
+
+        const roundResult = this.game.endVsAiRound(playerWonRound);
+
+        // Update scores
+        this._updateVsAiScores(
+            roundResult.playerScore,
+            roundResult.aiScore,
+            roundResult.currentRound,
+            roundResult.totalRounds
+        );
+
+        // Check if match is over
+        if (roundResult.isMatchOver) {
+            setTimeout(() => {
+                this._showVsAiMatchComplete();
+            }, 2000);
+        } else {
+            // Start next round after delay
+            setTimeout(() => {
+                this.game.isAnswering = false;
+
+                // Reset AI thinking display
+                const thinking = document.getElementById('vsai-ai-thinking');
+                if (thinking) {
+                    thinking.classList.remove('active', 'ai-answered-correct', 'ai-answered-wrong');
+                }
+                const fill = document.getElementById('vsai-thinking-fill');
+                if (fill) fill.style.width = '0%';
+
+                this._startVsAiRound();
+            }, 2200);
+        }
+    }
+
+    _updateVsAiScores(playerScore, aiScore, round, total) {
+        const pScore = document.getElementById('vsai-player-score');
+        const aScore = document.getElementById('vsai-ai-score');
+        const roundNum = document.getElementById('vsai-round-num');
+        const roundOf = document.querySelector('.vsai-round-of');
+
+        if (pScore) pScore.textContent = playerScore;
+        if (aScore) aScore.textContent = aiScore;
+        if (roundNum) roundNum.textContent = round;
+        if (roundOf) roundOf.textContent = `/ ${total}`;
+
+        // Animate score change
+        if (pScore) { pScore.classList.remove('score-pop'); void pScore.offsetWidth; pScore.classList.add('score-pop'); }
+        if (aScore) { aScore.classList.remove('score-pop'); void aScore.offsetWidth; aScore.classList.add('score-pop'); }
+    }
+
+    _showVsAiMatchComplete() {
+        const results = this.game.endVsAiMatch();
+        audio.stopMusic();
+
+        // Set up complete screen
+        const title = document.getElementById('vsai-complete-title');
+        const message = document.getElementById('vsai-complete-message');
+        const pAvatar = document.getElementById('vsai-final-player-avatar');
+        const aAvatar = document.getElementById('vsai-final-ai-avatar');
+        const aName = document.getElementById('vsai-final-ai-name');
+        const pScore = document.getElementById('vsai-final-player-score');
+        const aScore = document.getElementById('vsai-final-ai-score');
+        const streak = document.getElementById('vsai-final-streak');
+        const accuracy = document.getElementById('vsai-final-accuracy');
+
+        if (title) {
+            if (results.playerWon) {
+                title.textContent = '\u{1F3C6} You Win!';
+            } else if (results.isTie) {
+                title.textContent = '\u{1F91D} It\'s a Tie!';
+            } else {
+                title.textContent = 'Good Game!';
+            }
+        }
+
+        if (message) message.textContent = results.message;
+        if (pAvatar && this.game.selectedCharacter) pAvatar.textContent = this.game.selectedCharacter.emoji;
+        else if (pAvatar) pAvatar.textContent = '\u{1F9D2}';
+        if (aAvatar) aAvatar.textContent = results.opponent.emoji;
+        if (aName) aName.textContent = results.opponent.name;
+        if (pScore) pScore.textContent = results.playerScore;
+        if (aScore) aScore.textContent = results.aiScore;
+        if (streak) streak.textContent = this.game.bestStreak;
+        if (accuracy) {
+            const acc = this._vsAiTotalRounds > 0
+                ? Math.round((this._vsAiCorrectAnswers / this._vsAiTotalRounds) * 100)
+                : 0;
+            accuracy.textContent = `${acc}%`;
+        }
+
+        this.showScreen('vsaiComplete');
+
+        // Effects
+        if (results.playerWon) {
+            this.game.particles.confetti(3000);
+            audio.playFanfare();
+        } else {
+            audio.playStar();
+        }
+
+        // Focus rematch button
+        setTimeout(() => {
+            const rematchBtn = document.querySelector('[data-action="vsai-rematch"]');
+            if (rematchBtn) rematchBtn.focus();
+        }, 500);
+    }
+
+    _cleanupVsAi() {
+        clearInterval(this._vsAiProgressLoop);
+        if (this._vsAiAnswerHandler) {
+            document.removeEventListener('ai-answered', this._vsAiAnswerHandler);
+        }
+        if (this.game.vsAI) {
+            this.game.vsAI._cancelAiTimer();
+            clearInterval(this.game.vsAI._aiProgressInterval);
+            this.game.vsAI.roundActive = false;
+        }
+    }
+
     _handleAction(action) {
         switch (action) {
             case 'play':
@@ -1695,13 +2110,19 @@ class UIManager {
 
             case 'confirm-character':
                 if (this.confirmCharacter()) {
-                    this.game.setState('levelSelect');
-                    this.showScreen('levelSelect');
-                    this.buildIslandMap();
-                    // Focus first available level
-                    setTimeout(() => {
-                        this.focusLevel(this.game.progress.highestUnlocked);
-                    }, 300);
+                    // Check if we came from VS AI flow
+                    if (this._vsAiAfterCharSelect) {
+                        this._vsAiAfterCharSelect = false;
+                        this.showVsAiSelect();
+                    } else {
+                        this.game.setState('levelSelect');
+                        this.showScreen('levelSelect');
+                        this.buildIslandMap();
+                        // Focus first available level
+                        setTimeout(() => {
+                            this.focusLevel(this.game.progress.highestUnlocked);
+                        }, 300);
+                    }
                     audio.playSelect();
                 }
                 break;
@@ -1847,6 +2268,72 @@ class UIManager {
                 this.showScreen('characterSelect');
                 this._initCharacterGrid();
                 setTimeout(() => this.focusCharacter(0), 200);
+                audio.playSelect();
+                break;
+
+            // ---- VS AI actions ----
+
+            case 'vs-ai':
+                // Need character first; if already selected, go to opponent select
+                if (this.game.selectedCharacter) {
+                    this.showVsAiSelect();
+                } else {
+                    // Go to character select, then redirect to VS AI
+                    this._vsAiAfterCharSelect = true;
+                    this.game.setState('characterSelect');
+                    this.showScreen('characterSelect');
+                    this._initCharacterGrid();
+                    setTimeout(() => this.focusCharacter(0), 200);
+                }
+                audio.playSelect();
+                break;
+
+            case 'vsai-back-to-menu':
+                this.game.setState('menu');
+                this.showScreen('menu');
+                audio.playSelect();
+                setTimeout(() => {
+                    const playBtn = document.querySelector('.btn-play');
+                    if (playBtn) playBtn.focus();
+                }, 200);
+                break;
+
+            case 'vsai-start-match':
+                this.startVsAiMatch();
+                audio.playSelect();
+                break;
+
+            case 'vsai-quit':
+                this._cleanupVsAi();
+                this.game.isVsAiMode = false;
+                this.game.isAnswering = false;
+                this.game.setState('menu');
+                this.showScreen('menu');
+                audio.stopMusic();
+                audio.playSelect();
+                break;
+
+            case 'vsai-rematch':
+                this._cleanupVsAi();
+                this.game.isAnswering = false;
+                this.startVsAiMatch();
+                audio.playSelect();
+                break;
+
+            case 'vsai-change-opponent':
+                this._cleanupVsAi();
+                this.game.isAnswering = false;
+                this.showVsAiSelect();
+                audio.playSelect();
+                break;
+
+            case 'vsai-back-to-menu-end':
+                this._cleanupVsAi();
+                this.game.isVsAiMode = false;
+                this.game.isAnswering = false;
+                this.game.setState('menu');
+                this.showScreen('menu');
+                this.game.particles.clear();
                 audio.playSelect();
                 break;
 
