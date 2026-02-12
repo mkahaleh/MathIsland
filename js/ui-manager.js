@@ -66,36 +66,42 @@ class UIManager {
         const prevIndex = screenOrder.indexOf(prevScreen);
         const nextIndex = screenOrder.indexOf(name);
         const goingForward = nextIndex >= prevIndex;
+        const isSameScreen = prevScreen === name;
 
-        // Exit animation on current screen
-        Object.entries(this.screens).forEach(([key, s]) => {
-            if (s && s.classList.contains('active')) {
-                s.classList.add(goingForward ? 'slide-out-left' : 'slide-out-right');
-                setTimeout(() => {
-                    s.classList.remove('active', 'slide-out-left', 'slide-out-right',
-                        'slide-in-left', 'slide-in-right', 'zoom-in', 'zoom-out');
-                }, 400);
-            }
-        });
+        // Exit animation on current screen (skip if navigating to same screen)
+        if (!isSameScreen) {
+            Object.entries(this.screens).forEach(([key, s]) => {
+                if (s && s.classList.contains('active')) {
+                    s.classList.add(goingForward ? 'slide-out-left' : 'slide-out-right');
+                    setTimeout(() => {
+                        // Only remove animation classes here; 'active' is handled by entrance code
+                        s.classList.remove('slide-out-left', 'slide-out-right',
+                            'slide-in-left', 'slide-in-right', 'zoom-in', 'zoom-out');
+                    }, 400);
+                }
+            });
+        }
 
         // Entrance animation on new screen
-        const delay = prevScreen ? 150 : 0;
+        const delay = (!isSameScreen && prevScreen) ? 150 : 0;
         setTimeout(() => {
             Object.values(this.screens).forEach(s => {
                 if (s) s.classList.remove('active');
             });
             if (this.screens[name]) {
                 this.screens[name].classList.add('active');
-                if (name === 'hud' || name === 'complete') {
-                    this.screens[name].classList.add('zoom-in');
-                } else {
-                    this.screens[name].classList.add(goingForward ? 'slide-in-right' : 'slide-in-left');
-                }
-                setTimeout(() => {
-                    if (this.screens[name]) {
-                        this.screens[name].classList.remove('slide-in-left', 'slide-in-right', 'zoom-in');
+                if (!isSameScreen) {
+                    if (name === 'hud' || name === 'complete') {
+                        this.screens[name].classList.add('zoom-in');
+                    } else {
+                        this.screens[name].classList.add(goingForward ? 'slide-in-right' : 'slide-in-left');
                     }
-                }, 600);
+                    setTimeout(() => {
+                        if (this.screens[name]) {
+                            this.screens[name].classList.remove('slide-in-left', 'slide-in-right', 'zoom-in');
+                        }
+                    }, 600);
+                }
             }
         }, delay);
 
