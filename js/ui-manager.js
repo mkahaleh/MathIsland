@@ -317,15 +317,31 @@ class UIManager {
         for (let i = 0; i < zonePositions.length - 1; i++) {
             const p1 = zonePositions[i];
             const p2 = zonePositions[i + 1];
-            const path = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-            path.setAttribute('x1', p1.cx);
-            path.setAttribute('y1', p1.cy);
-            path.setAttribute('x2', p2.cx);
-            path.setAttribute('y2', p2.cy);
-            path.setAttribute('stroke', 'rgba(255,255,255,0.3)');
-            path.setAttribute('stroke-width', '4');
-            path.setAttribute('stroke-dasharray', '12,8');
+
+            // Curved dotted path between zones (Unity-style)
+            const midX = (p1.cx + p2.cx) / 2;
+            const midY = Math.min(p1.cy, p2.cy) - 40;
+            const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            path.setAttribute('d', `M ${p1.cx} ${p1.cy} Q ${midX} ${midY} ${p2.cx} ${p2.cy}`);
+            path.setAttribute('stroke', 'rgba(255,255,255,0.5)');
+            path.setAttribute('stroke-width', '6');
+            path.setAttribute('stroke-dasharray', '15,10');
+            path.setAttribute('stroke-linecap', 'round');
+            path.setAttribute('fill', 'none');
+            path.setAttribute('filter', 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))');
             svg.appendChild(path);
+
+            // Animated dots along the path
+            const dotPath = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+            dotPath.setAttribute('r', '5');
+            dotPath.setAttribute('fill', '#ffd700');
+            dotPath.setAttribute('filter', 'drop-shadow(0 0 6px rgba(255,215,0,0.6))');
+            const animateMotion = document.createElementNS('http://www.w3.org/2000/svg', 'animateMotion');
+            animateMotion.setAttribute('dur', '3s');
+            animateMotion.setAttribute('repeatCount', 'indefinite');
+            animateMotion.setAttribute('path', `M ${p1.cx} ${p1.cy} Q ${midX} ${midY} ${p2.cx} ${p2.cy}`);
+            dotPath.appendChild(animateMotion);
+            svg.appendChild(dotPath);
         }
 
         map.appendChild(svg);
@@ -334,18 +350,43 @@ class UIManager {
         Levels.zones.forEach((zone, zi) => {
             const pos = zonePositions[zi];
 
-            // Island background blob
+            // Island background blob with glow
             const blob = document.createElement('div');
             blob.className = 'map-island-bg';
             blob.style.cssText = `
-                left: ${pos.cx - 100}px;
-                top: ${pos.cy - 60}px;
-                width: 200px;
-                height: 120px;
-                background: radial-gradient(ellipse, ${zone.color}40, ${zone.color}10);
+                left: ${pos.cx - 110}px;
+                top: ${pos.cy - 70}px;
+                width: 220px;
+                height: 140px;
+                background: radial-gradient(ellipse, ${zone.color}50, ${zone.color}15, transparent);
                 border-radius: 50%;
+                filter: blur(2px);
             `;
             map.appendChild(blob);
+
+            // Zone name label (Unity-style banner)
+            const zoneLabel = document.createElement('div');
+            zoneLabel.className = 'map-zone-label';
+            zoneLabel.style.cssText = `
+                position: absolute;
+                left: ${pos.cx - 70}px;
+                top: ${pos.cy + 60}px;
+                width: 140px;
+                text-align: center;
+                font-size: 16px;
+                font-weight: 800;
+                color: white;
+                text-shadow: 0 2px 6px rgba(0,0,0,0.5);
+                background: ${zone.color}cc;
+                padding: 5px 12px;
+                border-radius: 12px;
+                border: 2px solid rgba(255,255,255,0.3);
+                box-shadow: 0 3px 0 rgba(0,0,0,0.2);
+                z-index: 3;
+                letter-spacing: 0.5px;
+            `;
+            zoneLabel.textContent = zone.name;
+            map.appendChild(zoneLabel);
 
             // Level nodes within zone
             const levelPositions = this._getLevelPositionsInZone(pos, zone.levels.length);
@@ -370,8 +411,8 @@ class UIManager {
                     top: ${lp.y - nodeSize / 2}px;
                     width: ${nodeSize}px;
                     height: ${nodeSize}px;
-                    background: linear-gradient(180deg, ${zone.color}, ${zone.color}cc);
-                    font-size: ${isBoss ? '32px' : '28px'};
+                    background: linear-gradient(180deg, ${zone.color}ff 0%, ${zone.color}cc 60%, ${zone.color}88 100%);
+                    font-size: ${isBoss ? '36px' : '30px'};
                 `;
 
                 if (isBoss) {

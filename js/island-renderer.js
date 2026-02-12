@@ -115,8 +115,87 @@ class IslandRenderer {
         // Sparkles
         this._drawSparkles();
 
+        // Floating decorative elements (Unity-style)
+        this._drawFloatingDecorations();
+
+        // Rainbow arc
+        this._drawRainbowArc();
+
         // Vignette
         this._drawVignette(0.25);
+    }
+
+    _drawFloatingDecorations() {
+        const ctx = this.ctx;
+        const t = this.time;
+
+        // Floating bubbles
+        for (let i = 0; i < 8; i++) {
+            const x = 150 + i * 220 + Math.sin(t * 0.5 + i * 1.3) * 30;
+            const y = 200 + Math.sin(t * 0.3 + i * 0.9) * 80;
+            const size = 12 + Math.sin(t + i) * 4;
+            const alpha = 0.15 + Math.sin(t * 0.7 + i) * 0.08;
+
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(x, y, size, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
+            ctx.fill();
+
+            // Bubble highlight
+            ctx.beginPath();
+            ctx.arc(x - size * 0.3, y - size * 0.3, size * 0.25, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(255, 255, 255, ${alpha + 0.1})`;
+            ctx.fill();
+            ctx.restore();
+        }
+
+        // Floating star shapes
+        for (let i = 0; i < 5; i++) {
+            const x = 200 + i * 350 + Math.sin(t * 0.4 + i * 2) * 40;
+            const y = 100 + Math.sin(t * 0.6 + i * 1.5) * 50;
+            const size = 6 + Math.sin(t * 1.5 + i) * 2;
+            const rotation = t * 0.5 + i;
+            const alpha = 0.3 + Math.sin(t + i * 0.7) * 0.15;
+
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.rotate(rotation);
+            ctx.fillStyle = `rgba(255, 215, 0, ${alpha})`;
+            this._drawStarShape(ctx, 0, 0, size, size * 0.4, 5);
+            ctx.fill();
+            ctx.restore();
+        }
+    }
+
+    _drawStarShape(ctx, cx, cy, outerR, innerR, points) {
+        ctx.beginPath();
+        for (let i = 0; i < points * 2; i++) {
+            const angle = (i * Math.PI) / points - Math.PI / 2;
+            const r = i % 2 === 0 ? outerR : innerR;
+            const x = cx + Math.cos(angle) * r;
+            const y = cy + Math.sin(angle) * r;
+            if (i === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+        }
+        ctx.closePath();
+    }
+
+    _drawRainbowArc() {
+        const ctx = this.ctx;
+        const centerX = 960;
+        const centerY = 600;
+        const alpha = 0.08 + Math.sin(this.time * 0.3) * 0.03;
+
+        const colors = ['#ef476f', '#ff6b35', '#ffd166', '#06d6a0', '#00b4d8', '#8338ec'];
+
+        for (let i = 0; i < colors.length; i++) {
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, 800 - i * 18, Math.PI * 1.1, Math.PI * 1.9);
+            ctx.strokeStyle = colors[i] + Math.round(alpha * 255).toString(16).padStart(2, '0');
+            ctx.lineWidth = 14;
+            ctx.stroke();
+        }
     }
 
     // ========== BEACH ZONE ==========
