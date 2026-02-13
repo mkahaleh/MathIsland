@@ -331,6 +331,8 @@ class IslandRenderer {
         this._drawPalmTree(150, this.height * 0.55, 1);
         this._drawPalmTree(1750, this.height * 0.52, 1.1);
         this._drawShells();
+        this._drawSeabirds();
+        this._drawTreasureChest(960, this.height * 0.78);
         this._drawVignette(0.15);
         this._applyPostProcessing(0.07);
     }
@@ -391,6 +393,8 @@ class IslandRenderer {
         ctx.restore();
 
         this._drawFlowers();
+        this._drawMushrooms();
+        this._drawTempleRuins(1600, this.height * 0.65);
         this._drawForegroundDecor(this.height * 0.82);
         this._drawVignette(0.3);
         this._applyPostProcessing(0.05);
@@ -419,6 +423,8 @@ class IslandRenderer {
         ctx.restore();
 
         this._drawCrystals();
+        this._drawCrystalBeams();
+        this._drawUndergroundPool(700, this.height * 0.82);
 
         // Stalactites
         ctx.fillStyle = '#12121f';
@@ -512,6 +518,8 @@ class IslandRenderer {
         ctx.shadowBlur = 0;
         ctx.restore();
 
+        this._drawLavaPools();
+        this._drawVolcanoSmoke(960, 120);
         this._drawEmbers();
         this._drawVignette(0.35);
         this._applyPostProcessing(0.09);
@@ -534,6 +542,8 @@ class IslandRenderer {
             this._drawCloudPlatform(x, y, 200 + i * 20);
         }
 
+        this._drawFloatingCastle(960, 280);
+        this._drawSkySparkles();
         this._drawVignette(0.1);
         this._applyPostProcessing(0.05);
     }
@@ -570,6 +580,7 @@ class IslandRenderer {
         ctx.restore();
 
         this._drawPlanet(1400, 350, 120);
+        this._drawAsteroids();
         this._drawShootingStars();
         this._drawVignette(0.3);
         this._applyPostProcessing(0.03);
@@ -1326,6 +1337,324 @@ class IslandRenderer {
         ctx.arc(-5, -15, 16, 0, Math.PI * 2);
         ctx.fill();
 
+        ctx.restore();
+    }
+
+    // ========== ENHANCED DECORATIVE ELEMENTS ==========
+
+    _drawSeabirds() {
+        // Only draw every other frame for performance
+        if (this._frameCount % 2 !== 0) return;
+        const ctx = this.ctx;
+        ctx.save();
+        ctx.strokeStyle = '#555';
+        ctx.lineWidth = 2;
+        for (let i = 0; i < 5; i++) {
+            const bx = (300 + i * 340 + this.time * 30) % (this.width + 200) - 100;
+            const by = 120 + i * 40 + Math.sin(this.time * 2 + i * 1.5) * 20;
+            const wing = Math.sin(this.time * 4 + i * 2) * 8;
+            ctx.beginPath();
+            ctx.moveTo(bx - 12, by + wing);
+            ctx.quadraticCurveTo(bx - 4, by - 5, bx, by);
+            ctx.quadraticCurveTo(bx + 4, by - 5, bx + 12, by + wing);
+            ctx.stroke();
+        }
+        ctx.restore();
+    }
+
+    _drawTreasureChest(x, y) {
+        const ctx = this.ctx;
+        ctx.save();
+        // Chest body
+        ctx.fillStyle = '#8B4513';
+        ctx.fillRect(x - 25, y - 15, 50, 30);
+        // Chest lid
+        ctx.fillStyle = '#A0522D';
+        ctx.beginPath();
+        ctx.moveTo(x - 28, y - 15);
+        ctx.quadraticCurveTo(x, y - 30, x + 28, y - 15);
+        ctx.lineTo(x - 28, y - 15);
+        ctx.fill();
+        // Gold trim
+        ctx.strokeStyle = '#ffd700';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(x - 25, y - 15, 50, 30);
+        // Lock/clasp
+        ctx.fillStyle = '#ffd700';
+        ctx.beginPath();
+        ctx.arc(x, y - 15, 5, 0, Math.PI * 2);
+        ctx.fill();
+        // Sparkle hint
+        const sparkle = 0.3 + Math.sin(this.time * 3) * 0.3;
+        ctx.globalAlpha = sparkle;
+        ctx.fillStyle = '#ffd700';
+        ctx.beginPath();
+        ctx.arc(x + 15, y - 28, 3, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+    }
+
+    _drawMushrooms() {
+        const ctx = this.ctx;
+        const colors = ['#ef476f', '#f77f00', '#ffd166', '#06d6a0', '#118ab2'];
+        for (let i = 0; i < 8; i++) {
+            const mx = 100 + i * 240 + Math.sin(i * 2.3) * 40;
+            const my = this.height * 0.76 + (i * 17) % 30;
+            const size = 12 + (i * 7) % 10;
+            // Stem
+            ctx.fillStyle = '#f5f0e1';
+            ctx.fillRect(mx - 3, my - size * 0.4, 6, size * 0.6);
+            // Cap
+            ctx.fillStyle = colors[i % colors.length];
+            ctx.beginPath();
+            ctx.arc(mx, my - size * 0.4, size * 0.5, Math.PI, 0);
+            ctx.fill();
+            // Spots
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+            ctx.beginPath();
+            ctx.arc(mx - 3, my - size * 0.5, 2, 0, Math.PI * 2);
+            ctx.arc(mx + 4, my - size * 0.55, 1.5, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+
+    _drawTempleRuins(x, y) {
+        const ctx = this.ctx;
+        ctx.save();
+        ctx.globalAlpha = 0.5;
+        // Stone blocks
+        ctx.fillStyle = '#5a6040';
+        // Left pillar
+        ctx.fillRect(x - 50, y - 80, 20, 80);
+        // Right pillar
+        ctx.fillRect(x + 30, y - 70, 20, 70);
+        // Top lintel
+        ctx.fillRect(x - 55, y - 90, 110, 15);
+        // Vine overgrowth
+        ctx.fillStyle = '#2d6a4f';
+        ctx.beginPath();
+        ctx.arc(x - 40, y - 85, 12, 0, Math.PI * 2);
+        ctx.arc(x + 50, y - 80, 10, 0, Math.PI * 2);
+        ctx.fill();
+        // Mysterious glow inside
+        ctx.globalAlpha = 0.15 + Math.sin(this.time * 2) * 0.1;
+        ctx.fillStyle = '#ffd700';
+        ctx.fillRect(x - 25, y - 65, 50, 65);
+        ctx.restore();
+    }
+
+    _drawCrystalBeams() {
+        if (this._frameCount % 3 !== 0) return;
+        const ctx = this.ctx;
+        ctx.save();
+        const beamColors = ['rgba(131, 56, 236, 0.1)', 'rgba(6, 214, 160, 0.08)', 'rgba(239, 71, 111, 0.08)'];
+        for (let i = 0; i < 4; i++) {
+            const bx = 200 + i * 450;
+            const angle = Math.sin(this.time * 0.5 + i * 1.5) * 0.3;
+            ctx.fillStyle = beamColors[i % beamColors.length];
+            ctx.beginPath();
+            ctx.moveTo(bx, this.height * 0.3 + (i * 50) % 200);
+            ctx.lineTo(bx + Math.cos(angle) * 400, 0);
+            ctx.lineTo(bx + Math.cos(angle) * 400 + 30, 0);
+            ctx.lineTo(bx + 15, this.height * 0.3 + (i * 50) % 200);
+            ctx.fill();
+        }
+        ctx.restore();
+    }
+
+    _drawUndergroundPool(x, y) {
+        const ctx = this.ctx;
+        ctx.save();
+        // Pool body
+        const poolGrad = ctx.createRadialGradient(x, y, 10, x, y, 120);
+        poolGrad.addColorStop(0, 'rgba(0, 180, 216, 0.4)');
+        poolGrad.addColorStop(0.5, 'rgba(0, 100, 160, 0.25)');
+        poolGrad.addColorStop(1, 'transparent');
+        ctx.fillStyle = poolGrad;
+        ctx.beginPath();
+        ctx.ellipse(x, y, 120, 30, 0, 0, Math.PI * 2);
+        ctx.fill();
+        // Reflections
+        ctx.globalAlpha = 0.15 + Math.sin(this.time * 2) * 0.1;
+        ctx.fillStyle = '#00b4d8';
+        for (let i = 0; i < 4; i++) {
+            const rx = x - 60 + i * 40 + Math.sin(this.time + i) * 5;
+            ctx.beginPath();
+            ctx.ellipse(rx, y, 8, 2, 0, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        ctx.restore();
+    }
+
+    _drawLavaPools() {
+        const ctx = this.ctx;
+        const pools = [
+            { x: 300, y: this.height * 0.85, rx: 80, ry: 20 },
+            { x: 1600, y: this.height * 0.82, rx: 60, ry: 15 },
+        ];
+        pools.forEach((pool, i) => {
+            ctx.save();
+            // Lava pool glow
+            const glow = ctx.createRadialGradient(pool.x, pool.y, 5, pool.x, pool.y, pool.rx * 1.5);
+            glow.addColorStop(0, 'rgba(255, 120, 0, 0.6)');
+            glow.addColorStop(0.5, 'rgba(255, 60, 0, 0.2)');
+            glow.addColorStop(1, 'transparent');
+            ctx.fillStyle = glow;
+            ctx.fillRect(pool.x - pool.rx * 2, pool.y - pool.ry * 3, pool.rx * 4, pool.ry * 6);
+            // Pool surface
+            ctx.fillStyle = '#ff6b00';
+            ctx.beginPath();
+            ctx.ellipse(pool.x, pool.y, pool.rx, pool.ry, 0, 0, Math.PI * 2);
+            ctx.fill();
+            // Bubbles
+            for (let j = 0; j < 3; j++) {
+                const bx = pool.x - 30 + j * 30 + Math.sin(this.time * 3 + i + j) * 10;
+                const by = pool.y - Math.abs(Math.sin(this.time * 2 + j * 2)) * 15;
+                ctx.fillStyle = 'rgba(255, 200, 0, 0.5)';
+                ctx.beginPath();
+                ctx.arc(bx, by, 3 + Math.sin(this.time * 4 + j) * 1.5, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            ctx.restore();
+        });
+    }
+
+    _drawVolcanoSmoke(x, y) {
+        if (this._frameCount % 2 !== 0) return;
+        const ctx = this.ctx;
+        ctx.save();
+        for (let i = 0; i < 6; i++) {
+            const age = (this.time * 0.5 + i * 0.4) % 3;
+            const sx = x + Math.sin(this.time * 0.8 + i * 1.2) * (20 + age * 20);
+            const sy = y - age * 60;
+            const size = 15 + age * 25;
+            ctx.globalAlpha = Math.max(0, 0.15 - age * 0.05);
+            ctx.fillStyle = '#666';
+            ctx.beginPath();
+            ctx.arc(sx, sy, size, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        ctx.restore();
+    }
+
+    _drawFloatingCastle(x, y) {
+        const ctx = this.ctx;
+        ctx.save();
+        const bob = Math.sin(this.time * 0.8) * 8;
+        ctx.translate(0, bob);
+
+        // Castle base platform
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+        ctx.beginPath();
+        ctx.ellipse(x, y + 50, 80, 20, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Main tower
+        ctx.fillStyle = '#e8ddd0';
+        ctx.fillRect(x - 25, y - 40, 50, 90);
+        // Tower top
+        ctx.fillStyle = '#8338ec';
+        ctx.beginPath();
+        ctx.moveTo(x - 30, y - 40);
+        ctx.lineTo(x, y - 70);
+        ctx.lineTo(x + 30, y - 40);
+        ctx.fill();
+
+        // Side towers
+        ctx.fillStyle = '#d4c5b0';
+        ctx.fillRect(x - 50, y - 20, 20, 70);
+        ctx.fillRect(x + 30, y - 20, 20, 70);
+        // Side tower tops
+        ctx.fillStyle = '#6d28d9';
+        ctx.beginPath();
+        ctx.moveTo(x - 53, y - 20);
+        ctx.lineTo(x - 40, y - 38);
+        ctx.lineTo(x - 27, y - 20);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.moveTo(x + 27, y - 20);
+        ctx.lineTo(x + 40, y - 38);
+        ctx.lineTo(x + 53, y - 20);
+        ctx.fill();
+
+        // Windows
+        ctx.fillStyle = '#ffd700';
+        ctx.globalAlpha = 0.5 + Math.sin(this.time * 2) * 0.3;
+        ctx.fillRect(x - 8, y - 20, 6, 8);
+        ctx.fillRect(x + 2, y - 20, 6, 8);
+        ctx.fillRect(x - 5, y, 10, 12);
+        ctx.globalAlpha = 1;
+
+        // Flag
+        ctx.fillStyle = '#ffd700';
+        ctx.fillRect(x - 1, y - 70, 2, -20);
+        const flagWave = Math.sin(this.time * 3) * 3;
+        ctx.fillStyle = '#ef476f';
+        ctx.beginPath();
+        ctx.moveTo(x + 1, y - 90);
+        ctx.lineTo(x + 18, y - 85 + flagWave);
+        ctx.lineTo(x + 1, y - 78);
+        ctx.fill();
+
+        ctx.restore();
+    }
+
+    _drawSkySparkles() {
+        if (this._frameCount % 2 !== 0) return;
+        const ctx = this.ctx;
+        ctx.save();
+        for (let i = 0; i < 8; i++) {
+            const sx = (i * 250 + this.time * 15) % this.width;
+            const sy = 100 + (i * 70) % 300;
+            const sparkle = 0.2 + Math.sin(this.time * 3 + i * 1.7) * 0.2;
+            ctx.globalAlpha = sparkle;
+            ctx.fillStyle = i % 2 === 0 ? '#ffd700' : '#ffffff';
+            // 4-point star
+            const s = 3 + Math.sin(this.time * 2 + i) * 1;
+            ctx.beginPath();
+            ctx.moveTo(sx, sy - s);
+            ctx.lineTo(sx + s * 0.3, sy - s * 0.3);
+            ctx.lineTo(sx + s, sy);
+            ctx.lineTo(sx + s * 0.3, sy + s * 0.3);
+            ctx.lineTo(sx, sy + s);
+            ctx.lineTo(sx - s * 0.3, sy + s * 0.3);
+            ctx.lineTo(sx - s, sy);
+            ctx.lineTo(sx - s * 0.3, sy - s * 0.3);
+            ctx.closePath();
+            ctx.fill();
+        }
+        ctx.restore();
+    }
+
+    _drawAsteroids() {
+        const ctx = this.ctx;
+        ctx.save();
+        for (let i = 0; i < 5; i++) {
+            const ax = (200 + i * 370 + this.time * (5 + i * 2)) % (this.width + 100) - 50;
+            const ay = 300 + i * 80 + Math.sin(this.time * 0.5 + i) * 40;
+            const size = 8 + (i * 7) % 12;
+            const rot = this.time * (0.3 + i * 0.1);
+            ctx.save();
+            ctx.translate(ax, ay);
+            ctx.rotate(rot);
+            // Irregular asteroid shape
+            ctx.fillStyle = `hsl(${30 + i * 15}, 15%, ${30 + i * 5}%)`;
+            ctx.beginPath();
+            for (let a = 0; a < 7; a++) {
+                const angle = (a / 7) * Math.PI * 2;
+                const r = size * (0.7 + ((a * 3 + i * 5) % 7) * 0.06);
+                if (a === 0) ctx.moveTo(Math.cos(angle) * r, Math.sin(angle) * r);
+                else ctx.lineTo(Math.cos(angle) * r, Math.sin(angle) * r);
+            }
+            ctx.closePath();
+            ctx.fill();
+            // Highlight
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
+            ctx.beginPath();
+            ctx.arc(-size * 0.2, -size * 0.2, size * 0.35, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+        }
         ctx.restore();
     }
 }

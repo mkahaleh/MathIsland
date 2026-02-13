@@ -11,6 +11,11 @@
     let input = null;
 
     function init() {
+        // Initialize chibi sprite renderer (pre-cache character sprites)
+        if (typeof SpriteRenderer !== 'undefined') {
+            SpriteRenderer.init();
+        }
+
         // Initialize audio system
         audio.init();
 

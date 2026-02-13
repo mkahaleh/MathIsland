@@ -191,27 +191,26 @@ const Characters = {
         Utils.save('unlockedCharacters', unlocked);
     },
 
-    // Draw character on canvas with bouncing animation
-    drawCharacter(ctx, char, x, y, size, time) {
-        const bounceY = Math.sin(time * 2) * 8;
-        const scale = 1 + Math.sin(time * 3) * 0.03;
-
-        ctx.save();
-        ctx.translate(x, y + bounceY);
-        ctx.scale(scale, scale);
-
-        // Shadow
-        ctx.fillStyle = 'rgba(0,0,0,0.15)';
-        ctx.beginPath();
-        ctx.ellipse(0, size * 0.4, size * 0.35, size * 0.08, 0, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Character emoji
-        ctx.font = `${size}px Arial`;
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(char.emoji, 0, 0);
-
-        ctx.restore();
+    // Draw character on canvas - uses chibi sprite renderer
+    drawCharacter(ctx, char, x, y, size, time, mood) {
+        if (typeof SpriteRenderer !== 'undefined' && SpriteRenderer._cacheReady) {
+            SpriteRenderer.drawCharacter(ctx, char.id, x, y, size, time, mood || 'idle');
+        } else {
+            // Fallback to emoji while sprites load
+            const bounceY = Math.sin(time * 2) * 8;
+            const scale = 1 + Math.sin(time * 3) * 0.03;
+            ctx.save();
+            ctx.translate(x, y + bounceY);
+            ctx.scale(scale, scale);
+            ctx.fillStyle = 'rgba(0,0,0,0.15)';
+            ctx.beginPath();
+            ctx.ellipse(0, size * 0.4, size * 0.35, size * 0.08, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.font = `${size}px Arial`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(char.emoji, 0, 0);
+            ctx.restore();
+        }
     }
 };

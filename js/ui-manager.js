@@ -118,6 +118,7 @@ class UIManager {
         const nextIndex = screenOrder.indexOf(name);
         const goingForward = nextIndex >= prevIndex;
         const isSameScreen = prevScreen === name;
+        const hasGsap = typeof gsap !== 'undefined';
 
         if (isSameScreen) {
             // Same screen - just ensure it's active, no animations
@@ -125,10 +126,48 @@ class UIManager {
                 this.screens[name].classList.add('active');
             }
             this.currentScreen = name;
-        } else {
-            // Different screen - animate transition
+        } else if (hasGsap) {
+            // GSAP-powered screen transitions (smoother than CSS keyframes)
+            const activeScreen = this.screens[prevScreen];
+            const newScreen = this.screens[name];
+            const isZoom = name === 'hud' || name === 'vsaiHud' || name === 'complete';
+            const slideDir = goingForward ? -1 : 1;
 
-            // Exit animation on old screen - only target the current active screen
+            // Exit old screen
+            if (activeScreen && activeScreen.classList.contains('active')) {
+                gsap.to(activeScreen, {
+                    x: slideDir * 120,
+                    opacity: 0,
+                    duration: 0.35,
+                    ease: 'power2.in',
+                    onComplete: () => {
+                        activeScreen.classList.remove('active', 'slide-out-left', 'slide-out-right',
+                            'slide-in-left', 'slide-in-right', 'zoom-in', 'zoom-out');
+                        gsap.set(activeScreen, { x: 0, opacity: 0, scale: 1 });
+                    }
+                });
+            }
+
+            // Enter new screen
+            const delay = prevScreen ? 0.12 : 0;
+            if (newScreen) {
+                newScreen.classList.add('active');
+                if (isZoom) {
+                    gsap.fromTo(newScreen,
+                        { scale: 0.82, opacity: 0 },
+                        { scale: 1, opacity: 1, duration: 0.5, delay, ease: 'back.out(1.4)' }
+                    );
+                } else {
+                    gsap.fromTo(newScreen,
+                        { x: -slideDir * 120, opacity: 0 },
+                        { x: 0, opacity: 1, duration: 0.45, delay, ease: 'power3.out' }
+                    );
+                }
+            }
+
+            this.currentScreen = name;
+        } else {
+            // CSS fallback - original transition code
             const activeScreen = this.screens[prevScreen];
             if (activeScreen && activeScreen.classList.contains('active')) {
                 activeScreen.classList.add(goingForward ? 'slide-out-left' : 'slide-out-right');
@@ -138,10 +177,8 @@ class UIManager {
                 }, 400);
             }
 
-            // Entrance animation on new screen
             const delay = prevScreen ? 150 : 0;
             setTimeout(() => {
-                // Don't remove active from ALL screens here - exit timeout handles old ones
                 if (this.screens[name]) {
                     this.screens[name].classList.add('active');
                     if (name === 'hud' || name === 'vsaiHud' || name === 'complete') {
@@ -283,6 +320,15 @@ class UIManager {
 
             grid.appendChild(card);
         });
+
+        // GSAP staggered character card entrance
+        if (typeof gsap !== 'undefined') {
+            const cards = grid.querySelectorAll('.character-card');
+            gsap.fromTo(cards,
+                { y: 30, opacity: 0, scale: 0.9 },
+                { y: 0, opacity: 1, scale: 1, duration: 0.4, stagger: 0.08, ease: 'back.out(1.5)', delay: 0.1 }
+            );
+        }
     }
 
     _onCharacterFocus(index) {
@@ -580,23 +626,45 @@ class UIManager {
 
         overlay.style.display = 'flex';
         let count = 3;
+        const hasGsap = typeof gsap !== 'undefined';
 
         const showNumber = () => {
             if (count > 0) {
                 numberEl.className = 'countdown-number';
                 numberEl.textContent = count;
-                // Reset animation
-                void numberEl.offsetWidth;
-                numberEl.className = 'countdown-number';
                 audio.playCountdown();
+
+                if (hasGsap) {
+                    // GSAP dramatic countdown
+                    gsap.fromTo(numberEl,
+                        { scale: 3, opacity: 0, rotation: -15 },
+                        { scale: 1, opacity: 1, rotation: 0, duration: 0.5, ease: 'back.out(2)' }
+                    );
+                    gsap.to(numberEl, {
+                        scale: 0.5, opacity: 0, duration: 0.25, delay: 0.55, ease: 'power2.in'
+                    });
+                } else {
+                    void numberEl.offsetWidth;
+                }
                 count--;
                 setTimeout(showNumber, 800);
             } else {
                 // Show GO!
                 numberEl.className = 'countdown-number go';
                 numberEl.textContent = 'GO!';
-                void numberEl.offsetWidth;
                 audio.playLevelStart();
+
+                if (hasGsap) {
+                    gsap.fromTo(numberEl,
+                        { scale: 0, opacity: 0, rotation: -30 },
+                        { scale: 1.2, opacity: 1, rotation: 0, duration: 0.4, ease: 'elastic.out(1, 0.4)' }
+                    );
+                    gsap.to(numberEl, {
+                        scale: 2, opacity: 0, duration: 0.35, delay: 0.4, ease: 'power2.in'
+                    });
+                } else {
+                    void numberEl.offsetWidth;
+                }
 
                 setTimeout(() => {
                     overlay.style.display = 'none';
@@ -652,8 +720,30 @@ class UIManager {
 
     _updateHud() {
         this._dom.hudLevel.textContent = this.game.currentLevel.num;
-        this._dom.hudScore.textContent = Utils.formatNumber(this.game.score);
-        this._dom.hudStreak.textContent = this.game.streak;
+
+        // Animate score change with GSAP
+        const newScore = Utils.formatNumber(this.game.score);
+        if (this._dom.hudScore.textContent !== newScore) {
+            this._dom.hudScore.textContent = newScore;
+            if (typeof gsap !== 'undefined') {
+                gsap.fromTo(this._dom.hudScore,
+                    { scale: 1.3 },
+                    { scale: 1, duration: 0.3, ease: 'back.out(2)' }
+                );
+            }
+        }
+
+        // Animate streak change
+        const newStreak = String(this.game.streak);
+        if (this._dom.hudStreak.textContent !== newStreak) {
+            this._dom.hudStreak.textContent = newStreak;
+            if (typeof gsap !== 'undefined' && this.game.streak > 0) {
+                gsap.fromTo(this._dom.hudStreak,
+                    { scale: 1.4, color: '#ffd700' },
+                    { scale: 1, color: '#ffffff', duration: 0.4, ease: 'elastic.out(1, 0.5)' }
+                );
+            }
+        }
 
         // Stars
         const thresholds = this.game.currentLevel.starThresholds;
@@ -804,9 +894,34 @@ class UIManager {
 
         // Show with animation
         container.classList.remove('visible');
-        requestAnimationFrame(() => {
+        if (typeof gsap !== 'undefined') {
+            // GSAP smooth problem entrance
             container.classList.add('visible');
-        });
+            const bubble = container.querySelector('.problem-bubble');
+            const charEl = container.querySelector('.problem-character');
+            if (bubble) {
+                gsap.fromTo(bubble,
+                    { scale: 0.85, opacity: 0, y: 20 },
+                    { scale: 1, opacity: 1, y: 0, duration: 0.4, ease: 'back.out(1.5)' }
+                );
+            }
+            if (charEl) {
+                gsap.fromTo(charEl,
+                    { x: -40, opacity: 0 },
+                    { x: 0, opacity: 1, duration: 0.5, ease: 'power3.out' }
+                );
+            }
+            // Stagger answer buttons entrance
+            const answerBtns = options.querySelectorAll('.answer-btn');
+            gsap.fromTo(answerBtns,
+                { y: 20, opacity: 0, scale: 0.9 },
+                { y: 0, opacity: 1, scale: 1, duration: 0.3, stagger: 0.06, delay: 0.15, ease: 'back.out(1.3)' }
+            );
+        } else {
+            requestAnimationFrame(() => {
+                container.classList.add('visible');
+            });
+        }
 
         // Update progress
         this._updateProgress();
@@ -837,6 +952,12 @@ class UIManager {
         // Visual feedback on button
         if (result.correct) {
             btnElement.classList.add('correct');
+            if (typeof gsap !== 'undefined') {
+                gsap.fromTo(btnElement,
+                    { scale: 1 },
+                    { scale: 1.12, duration: 0.2, ease: 'back.out(3)', yoyo: true, repeat: 1 }
+                );
+            }
             audio.playCorrect();
             audio.playStreak(this.game.streak);
             this.setCharacterMood('happy');
@@ -866,6 +987,12 @@ class UIManager {
 
         } else {
             btnElement.classList.add('wrong');
+            if (typeof gsap !== 'undefined') {
+                gsap.fromTo(btnElement,
+                    { x: 0 },
+                    { x: 12, duration: 0.06, ease: 'none', yoyo: true, repeat: 5 }
+                );
+            }
             audio.playWrong();
             this.setCharacterMood('sad');
 
@@ -986,8 +1113,38 @@ class UIManager {
         content.textContent = message;
         overlay.classList.add('visible');
 
+        if (typeof gsap !== 'undefined') {
+            // GSAP juicy feedback animation
+            if (type === 'correct') {
+                gsap.fromTo(content,
+                    { scale: 0, rotation: -15, opacity: 0 },
+                    { scale: 1.3, rotation: 5, opacity: 1, duration: 0.35, ease: 'back.out(2)' }
+                );
+                gsap.to(content, {
+                    scale: 1, rotation: 0, duration: 0.2, delay: 0.35, ease: 'power2.out'
+                });
+                gsap.to(content, {
+                    y: -30, opacity: 0, duration: 0.4, delay: 1.1, ease: 'power2.in'
+                });
+            } else {
+                gsap.fromTo(content,
+                    { scale: 0.5, opacity: 0 },
+                    { scale: 1.1, opacity: 1, duration: 0.3, ease: 'power3.out' }
+                );
+                gsap.to(content, {
+                    scale: 1, duration: 0.15, delay: 0.3, ease: 'power2.out'
+                });
+                gsap.to(content, {
+                    opacity: 0, duration: 0.3, delay: 1.2, ease: 'power2.in'
+                });
+            }
+        }
+
         setTimeout(() => {
             overlay.classList.remove('visible');
+            if (typeof gsap !== 'undefined') {
+                gsap.set(content, { clearProps: 'all' });
+            }
         }, 1500);
     }
 
@@ -1019,18 +1176,30 @@ class UIManager {
         if (!feedbackPoints) return;
 
         feedbackPoints.textContent = `+${Utils.formatNumber(points)} pts`;
-        feedbackPoints.classList.remove('animate');
-
-        // Force reflow to restart animation
-        void feedbackPoints.offsetWidth;
-
-        feedbackPoints.classList.add('animate');
         feedbackPoints.style.display = 'block';
 
-        setTimeout(() => {
+        if (typeof gsap !== 'undefined') {
+            // GSAP elastic points popup
+            gsap.fromTo(feedbackPoints,
+                { y: 0, scale: 0.5, opacity: 0 },
+                { y: -15, scale: 1.3, opacity: 1, duration: 0.3, ease: 'back.out(3)' }
+            );
+            gsap.to(feedbackPoints, {
+                y: -80, scale: 0.8, opacity: 0, duration: 0.7, delay: 0.5, ease: 'power2.in',
+                onComplete: () => {
+                    feedbackPoints.style.display = 'none';
+                    gsap.set(feedbackPoints, { clearProps: 'all' });
+                }
+            });
+        } else {
             feedbackPoints.classList.remove('animate');
-            feedbackPoints.style.display = 'none';
-        }, 1200);
+            void feedbackPoints.offsetWidth;
+            feedbackPoints.classList.add('animate');
+            setTimeout(() => {
+                feedbackPoints.classList.remove('animate');
+                feedbackPoints.style.display = 'none';
+            }, 1200);
+        }
     }
 
     // ---- Combo Display ----
@@ -1044,14 +1213,28 @@ class UIManager {
             comboCount.textContent = this.game.streak;
             comboDisplay.style.display = 'flex';
 
-            // Animate bigger at higher streaks
             const scale = Math.min(1 + (this.game.streak - 3) * 0.1, 2.0);
-            comboDisplay.style.transform = `scale(${scale})`;
 
-            // Pulse animation
-            comboDisplay.classList.remove('combo-pulse');
-            void comboDisplay.offsetWidth;
-            comboDisplay.classList.add('combo-pulse');
+            if (typeof gsap !== 'undefined') {
+                // GSAP explosive combo animation
+                gsap.fromTo(comboDisplay,
+                    { scale: scale * 1.5, rotation: this.game.streak > 5 ? -10 : -5 },
+                    {
+                        scale: scale, rotation: 0,
+                        duration: 0.4, ease: 'elastic.out(1, 0.3)'
+                    }
+                );
+                // Mega combo class for extra CSS effects
+                if (this.game.streak >= 7) {
+                    comboDisplay.classList.add('mega');
+                    setTimeout(() => comboDisplay.classList.remove('mega'), 600);
+                }
+            } else {
+                comboDisplay.style.transform = `scale(${scale})`;
+                comboDisplay.classList.remove('combo-pulse');
+                void comboDisplay.offsetWidth;
+                comboDisplay.classList.add('combo-pulse');
+            }
         }
     }
 
@@ -1453,15 +1636,62 @@ class UIManager {
             completeXp.textContent = `Level ${completedCount}/30 complete!`;
         }
 
-        // Stars
+        // Stars with GSAP cinematic reveal
         const starsContainer = document.getElementById('complete-stars');
         starsContainer.innerHTML = '';
+        const hasGsap = typeof gsap !== 'undefined';
         for (let i = 0; i < 3; i++) {
             const star = document.createElement('span');
             star.className = 'big-star';
             star.textContent = i < result.stars ? '\u2B50' : '\u2606';
             star.style.color = i < result.stars ? '#ffd700' : '#555';
+            if (hasGsap && i < result.stars) {
+                star.style.opacity = '0';
+                star.style.transform = 'scale(0) rotate(-180deg)';
+            }
             starsContainer.appendChild(star);
+        }
+
+        // GSAP staggered star reveal
+        if (hasGsap) {
+            const earnedStars = starsContainer.querySelectorAll('.big-star');
+            earnedStars.forEach((star, i) => {
+                if (i < result.stars) {
+                    gsap.to(star, {
+                        opacity: 1, scale: 1, rotation: 0,
+                        duration: 0.6, delay: 0.3 + i * 0.25,
+                        ease: 'elastic.out(1, 0.4)',
+                        onStart: () => { if (i > 0) audio.playStar(); }
+                    });
+                    // Subtle idle float after reveal
+                    gsap.to(star, {
+                        y: -5, duration: 1.5, delay: 0.9 + i * 0.25,
+                        ease: 'sine.inOut', yoyo: true, repeat: -1
+                    });
+                }
+            });
+
+            // Animate stat values counting up
+            const scoreEl = document.getElementById('complete-score');
+            if (scoreEl && result.score > 0) {
+                const target = { val: 0 };
+                gsap.to(target, {
+                    val: result.score, duration: 1.2, delay: 0.5,
+                    ease: 'power2.out',
+                    onUpdate: () => {
+                        scoreEl.textContent = Utils.formatNumber(Math.round(target.val));
+                    }
+                });
+            }
+
+            // Animate complete title
+            const completeTitle = document.getElementById('complete-title');
+            if (completeTitle) {
+                gsap.fromTo(completeTitle,
+                    { scale: 0.5, opacity: 0, y: 30 },
+                    { scale: 1, opacity: 1, y: 0, duration: 0.6, ease: 'back.out(1.7)' }
+                );
+            }
         }
 
         // Rewards / Unlocks

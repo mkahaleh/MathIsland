@@ -4481,3 +4481,412 @@ button:focus-visible,
     box-shadow: inset 0 2px 0 rgba(255, 200, 100, 0.3), 0 3px 6px rgba(0,0,0,0.3);
     background: radial-gradient(circle at 40% 35%, #c8a050, #8B6914);
 }
+
+/* ========================================
+   RPG GAME QUALITY VISUAL ENHANCEMENT
+   Fantasy-themed polish for Samsung Smart TV
+   ======================================== */
+
+/* -- MAGICAL SHIMMER EFFECT ON KEY PANELS -- */
+@keyframes magicShimmer {
+    0% { background-position: -300% 0; }
+    100% { background-position: 300% 0; }
+}
+
+.problem-bubble::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(
+        105deg,
+        transparent 40%,
+        rgba(255, 215, 0, 0.06) 45%,
+        rgba(255, 255, 255, 0.08) 50%,
+        rgba(255, 215, 0, 0.06) 55%,
+        transparent 60%
+    );
+    background-size: 300% 100%;
+    animation: magicShimmer 8s ease-in-out infinite;
+    border-radius: inherit;
+    pointer-events: none;
+    z-index: 0;
+}
+
+/* -- RPG GEM BORDER GLOW ON CHARACTER CARDS -- */
+.character-card.selected::before {
+    background: linear-gradient(180deg,
+        rgba(255, 215, 0, 0.3) 0%,
+        rgba(255, 200, 50, 0.1) 30%,
+        transparent 60%) !important;
+}
+
+/* -- ENCHANTED ANSWER BUTTONS -- */
+.answer-btn:nth-child(1) {
+    background: linear-gradient(180deg, #7dd3fc, #38bdf8, #0284c7) !important;
+    box-shadow: 0 6px 0 #075985, 0 8px 15px rgba(2, 132, 199, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
+}
+
+.answer-btn:nth-child(2) {
+    background: linear-gradient(180deg, #fda4af, #fb7185, #e11d48) !important;
+    box-shadow: 0 6px 0 #9f1239, 0 8px 15px rgba(225, 29, 72, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
+}
+
+.answer-btn:nth-child(3) {
+    background: linear-gradient(180deg, #6ee7b7, #34d399, #059669) !important;
+    box-shadow: 0 6px 0 #065f46, 0 8px 15px rgba(5, 150, 105, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
+}
+
+.answer-btn:nth-child(4) {
+    background: linear-gradient(180deg, #c4b5fd, #a78bfa, #7c3aed) !important;
+    box-shadow: 0 6px 0 #5b21b6, 0 8px 15px rgba(124, 58, 237, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
+}
+
+/* -- ENHANCED CORRECT/WRONG FEEDBACK -- */
+@keyframes correctGlow {
+    0% { box-shadow: 0 4px 0 #059669, 0 0 0 0 rgba(6, 214, 160, 0.6); }
+    50% { box-shadow: 0 4px 0 #059669, 0 0 40px 10px rgba(6, 214, 160, 0.4); }
+    100% { box-shadow: 0 4px 0 #059669, 0 0 0 0 rgba(6, 214, 160, 0); }
+}
+
+@keyframes wrongGlow {
+    0% { box-shadow: 0 4px 0 #be123c, 0 0 0 0 rgba(239, 71, 111, 0.6); }
+    50% { box-shadow: 0 4px 0 #be123c, 0 0 30px 8px rgba(239, 71, 111, 0.4); }
+    100% { box-shadow: 0 4px 0 #be123c, 0 0 0 0 rgba(239, 71, 111, 0); }
+}
+
+.answer-btn.correct {
+    animation: correctPop 0.5s var(--bounce), correctGlow 1s ease-out !important;
+    border-color: #059669 !important;
+}
+
+.answer-btn.wrong {
+    animation: wrongShake 0.5s ease-in-out, wrongGlow 0.8s ease-out !important;
+    border-color: #e11d48 !important;
+}
+
+/* -- RPG-STYLE PROGRESS BAR (XP BAR LOOK) -- */
+.progress-bar {
+    background: linear-gradient(90deg,
+        #06b6d4 0%,
+        #22d3ee 30%,
+        #67e8f9 50%,
+        #22d3ee 70%,
+        #06d6a0 100%) !important;
+    box-shadow: 0 0 12px rgba(6, 214, 160, 0.5),
+        0 0 4px rgba(34, 211, 238, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.4) !important;
+    position: relative;
+}
+
+.progress-bar-container {
+    background: rgba(0, 0, 0, 0.4) !important;
+    border: 2px solid rgba(255, 255, 255, 0.2) !important;
+    box-shadow: inset 0 3px 8px rgba(0, 0, 0, 0.4),
+        0 1px 0 rgba(255, 255, 255, 0.05) !important;
+}
+
+/* -- TIMER BAR RPG ENHANCEMENT -- */
+.hud-timer {
+    background: rgba(0, 0, 0, 0.4) !important;
+    border: 2px solid rgba(255, 255, 255, 0.15) !important;
+    box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.4) !important;
+}
+
+.timer-bar {
+    box-shadow: 0 0 12px rgba(6, 214, 160, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
+}
+
+/* -- ENHANCED LEVEL COMPLETE SCREEN -- */
+.complete-container {
+    position: relative;
+}
+
+.complete-title {
+    background: linear-gradient(180deg, #ffd700 0%, #ffaa00 40%, #ff8c00 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    filter: drop-shadow(0 4px 0 rgba(180, 100, 0, 0.6)) drop-shadow(0 8px 20px rgba(0, 0, 0, 0.5));
+}
+
+/* -- CINEMATIC STAR REVEAL -- */
+.complete-stars .big-star {
+    font-size: 110px !important;
+    transition: transform 0.3s var(--bounce);
+}
+
+.complete-stars .big-star:hover {
+    transform: scale(1.15) rotate(15deg);
+}
+
+/* -- RPG STAT CARDS ON LEVEL COMPLETE -- */
+.stat {
+    background: linear-gradient(180deg,
+        rgba(255, 255, 255, 0.12),
+        rgba(255, 255, 255, 0.04)) !important;
+    border: 2px solid rgba(255, 215, 0, 0.15) !important;
+    box-shadow: 0 6px 0 rgba(0, 0, 0, 0.15),
+        0 10px 30px rgba(0, 0, 0, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+    border-radius: 20px;
+}
+
+.stat-value {
+    background: linear-gradient(180deg, #ffffff 0%, #ffd700 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4));
+}
+
+/* -- ENHANCED COMBO FIRE EFFECT -- */
+.combo-display {
+    filter: drop-shadow(0 5px 20px rgba(255, 100, 0, 0.5)) !important;
+}
+
+@keyframes megaCombo {
+    0% { transform: scale(1) rotate(0deg); }
+    25% { transform: scale(1.15) rotate(-3deg); }
+    50% { transform: scale(1.05) rotate(3deg); }
+    75% { transform: scale(1.12) rotate(-2deg); }
+    100% { transform: scale(1) rotate(0deg); }
+}
+
+.combo-display.mega {
+    animation: megaCombo 0.6s var(--bounce);
+}
+
+/* -- MAGICAL GLOW ON HUD STARS WHEN EARNED -- */
+.star.earned {
+    filter: drop-shadow(0 0 12px rgba(255, 215, 0, 0.6))
+        drop-shadow(0 0 24px rgba(255, 215, 0, 0.3)) !important;
+}
+
+/* -- ENCHANTED ACHIEVEMENT TOAST -- */
+.achievement-toast {
+    background: linear-gradient(135deg,
+        rgba(40, 20, 80, 0.95),
+        rgba(20, 10, 50, 0.95)) !important;
+    border: 2px solid rgba(255, 215, 0, 0.5) !important;
+    box-shadow:
+        0 10px 40px rgba(0, 0, 0, 0.5),
+        0 0 40px rgba(255, 215, 0, 0.15),
+        0 0 80px rgba(131, 56, 236, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+}
+
+/* -- RPG SCROLL STYLE FOR LEVEL INFO -- */
+.level-info {
+    background: linear-gradient(180deg,
+        rgba(60, 35, 15, 0.92),
+        rgba(40, 25, 10, 0.92)) !important;
+    border: 3px solid rgba(255, 200, 100, 0.25) !important;
+    border-radius: 16px !important;
+    box-shadow:
+        0 6px 0 rgba(30, 15, 5, 0.3),
+        0 12px 30px rgba(0, 0, 0, 0.4),
+        inset 0 1px 0 rgba(255, 200, 100, 0.1) !important;
+}
+
+/* -- DAILY REWARD POPUP ENCHANTMENT -- */
+.daily-reward-content {
+    background: linear-gradient(180deg,
+        rgba(80, 50, 120, 0.95),
+        rgba(40, 25, 80, 0.95)) !important;
+    border-color: rgba(255, 215, 0, 0.5) !important;
+}
+
+/* -- RPG-STYLE STICKER CARDS -- */
+.sticker-card.collected {
+    border-color: rgba(255, 215, 0, 0.4) !important;
+    background: linear-gradient(180deg,
+        rgba(255, 215, 0, 0.12),
+        rgba(255, 165, 0, 0.05)) !important;
+    box-shadow: 0 4px 0 rgba(0, 0, 0, 0.1),
+        0 0 20px rgba(255, 215, 0, 0.08) !important;
+}
+
+/* -- ENHANCED COUNTDOWN SCREEN -- */
+.countdown-number {
+    font-size: 320px !important;
+    background: linear-gradient(180deg, #ffffff 0%, #ffd700 60%, #ff8c00 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    filter: drop-shadow(0 6px 0 rgba(180, 130, 0, 0.8))
+        drop-shadow(0 12px 40px rgba(0, 0, 0, 0.6))
+        drop-shadow(0 0 60px rgba(255, 215, 0, 0.4));
+}
+
+.countdown-number.go {
+    font-size: 220px !important;
+    background: linear-gradient(180deg, #ffffff 0%, #4ade80 40%, #06d6a0 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    filter: drop-shadow(0 6px 0 rgba(5, 150, 105, 0.8))
+        drop-shadow(0 12px 40px rgba(0, 0, 0, 0.6))
+        drop-shadow(0 0 60px rgba(6, 214, 160, 0.4));
+}
+
+/* -- ENHANCED FEEDBACK TEXT -- */
+.feedback-content.correct {
+    background: linear-gradient(180deg, #ffffff, #4ade80, #06d6a0);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    filter: drop-shadow(0 4px 0 rgba(5, 100, 60, 0.6))
+        drop-shadow(0 0 40px rgba(6, 214, 160, 0.5));
+    font-size: 95px !important;
+}
+
+.feedback-content.wrong {
+    font-size: 52px !important;
+    color: rgba(255, 255, 255, 0.95) !important;
+    text-shadow: 0 3px 15px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* -- IDLE SPARKLE ON GOLD ELEMENTS -- */
+@keyframes goldSparkle {
+    0%, 100% { opacity: 0.8; }
+    50% { opacity: 1; }
+}
+
+.map-star-count,
+.menu-stats {
+    position: relative;
+}
+
+/* -- ENHANCED MAP NODE GLOW -- */
+.map-node.available {
+    animation: nodePulse 2s ease-in-out infinite,
+        goldSparkle 3s ease-in-out infinite !important;
+}
+
+.map-node.completed {
+    border-color: rgba(255, 215, 0, 0.7) !important;
+    box-shadow: 0 4px 0 rgba(0, 0, 0, 0.2),
+        0 0 25px rgba(255, 215, 0, 0.4),
+        0 0 50px rgba(255, 215, 0, 0.15) !important;
+}
+
+/* -- MENU BUTTON MAGICAL HOVER EFFECT -- */
+.menu-btn::before {
+    background: linear-gradient(180deg,
+        rgba(255, 255, 255, 0.35) 0%,
+        rgba(255, 255, 255, 0.1) 40%,
+        rgba(255, 255, 255, 0.02) 100%) !important;
+}
+
+/* -- RPG FRAME CORNERS ON COMPLETE SCREEN -- */
+.complete-container::before {
+    content: '';
+    position: absolute;
+    top: -40px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 120px;
+    height: 120px;
+    background: radial-gradient(circle,
+        rgba(255, 215, 0, 0.25) 0%,
+        rgba(255, 215, 0, 0.1) 40%,
+        transparent 70%);
+    pointer-events: none;
+    animation: trophyGlow 3s ease-in-out infinite;
+}
+
+@keyframes trophyGlow {
+    0%, 100% { transform: translateX(-50%) scale(1); opacity: 0.6; }
+    50% { transform: translateX(-50%) scale(1.3); opacity: 1; }
+}
+
+/* -- ENHANCED PAUSE CONTAINER -- */
+.pause-container {
+    background: linear-gradient(180deg,
+        rgba(20, 10, 50, 0.95),
+        rgba(10, 5, 30, 0.95)) !important;
+    border-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+/* -- RPG SCROLL DECORATION FOR TUTORIAL -- */
+.tutorial-container {
+    background: linear-gradient(180deg,
+        rgba(100, 60, 160, 0.85),
+        rgba(60, 30, 120, 0.9)) !important;
+    border: 3px solid rgba(255, 215, 0, 0.2) !important;
+}
+
+/* -- QUEST MARKER ANIMATION ON AVAILABLE LEVELS -- */
+@keyframes questBounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+}
+
+.map-node.available::before {
+    content: '❗';
+    position: absolute;
+    top: -30px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 22px;
+    animation: questBounce 1.5s ease-in-out infinite;
+    filter: drop-shadow(0 2px 6px rgba(255, 100, 0, 0.5));
+    z-index: 5;
+}
+
+/* -- TREASURE CHEST EFFECT ON DAILY REWARD -- */
+@keyframes chestOpen {
+    0% { transform: scale(1) rotate(0deg); }
+    10% { transform: scale(1.1) rotate(-3deg); }
+    20% { transform: scale(1.1) rotate(3deg); }
+    30% { transform: scale(1) rotate(0deg); }
+    100% { transform: scale(1) rotate(0deg); }
+}
+
+.daily-reward-icon {
+    animation: chestOpen 3s ease-in-out infinite !important;
+}
+
+/* -- SCREEN BACKGROUND PATTERN OVERLAY (Subtle RPG texture) -- */
+#character-select,
+#achievements-screen,
+#sticker-screen,
+#settings-screen {
+    background-image:
+        repeating-linear-gradient(
+            45deg,
+            rgba(255, 255, 255, 0.01) 0px,
+            transparent 1px,
+            transparent 20px
+        ),
+        repeating-linear-gradient(
+            -45deg,
+            rgba(255, 255, 255, 0.01) 0px,
+            transparent 1px,
+            transparent 20px
+        );
+}
+
+/* -- VS AI ENHANCED GLOW -- */
+.vsai-vs-badge {
+    animation: vsBadgePulse 2s ease-in-out infinite;
+}
+
+@keyframes vsBadgePulse {
+    0%, 100% { box-shadow: 0 8px 0 rgba(0,0,0,0.25), 0 0 20px rgba(255,107,107,0.3); }
+    50% { box-shadow: 0 8px 0 rgba(0,0,0,0.25), 0 0 40px rgba(255,107,107,0.5); }
+}
+
+/* -- CRITICAL: Performance guard - disable expensive animations during gameplay -- */
+#game-hud.active .menu-bg,
+#game-hud.active #main-menu {
+    animation: none !important;
+}
