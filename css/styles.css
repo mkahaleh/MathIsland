@@ -64,6 +64,9 @@ html, body {
     background: #000;
     -webkit-user-select: none;
     user-select: none;
+    /* Performance: enable hardware acceleration */
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
 }
 
 body {
@@ -117,7 +120,9 @@ body {
     display: none;
     pointer-events: auto;
     opacity: 0;
-    transition: opacity 0.6s var(--smooth);
+    transition: opacity 0.4s var(--smooth);
+    will-change: opacity, transform;
+    transform: translateZ(0);
 }
 
 .screen.active {
@@ -168,13 +173,7 @@ body {
         radial-gradient(circle at 10% 20%, rgba(131, 56, 236, 0.15) 0%, transparent 30%),
         radial-gradient(circle at 85% 15%, rgba(255, 107, 138, 0.12) 0%, transparent 25%);
     z-index: 0;
-    animation: menuBgShift 20s ease-in-out infinite alternate;
-}
-
-@keyframes menuBgShift {
-    0% { filter: hue-rotate(0deg) brightness(1); }
-    50% { filter: hue-rotate(10deg) brightness(1.05); }
-    100% { filter: hue-rotate(-5deg) brightness(1); }
+    /* Animation removed: filter hue-rotate is very expensive on Smart TV GPU */
 }
 
 /* ---- Game Logo ---- */
@@ -186,6 +185,7 @@ body {
     justify-content: center;
     margin-bottom: 10px;
     animation: logoFloat 3s ease-in-out infinite;
+    will-change: transform;
 }
 
 .game-logo {
@@ -193,8 +193,7 @@ body {
     height: auto;
     max-height: 290px;
     object-fit: contain;
-    filter: drop-shadow(0 8px 25px rgba(0, 0, 0, 0.5))
-            drop-shadow(0 0 50px rgba(255, 215, 0, 0.3));
+    filter: drop-shadow(0 8px 25px rgba(0, 0, 0, 0.5));
     transition: transform 0.3s var(--bounce);
     position: relative;
     z-index: 2;
@@ -250,6 +249,7 @@ body {
     text-align: center;
     margin-bottom: 30px;
     animation: titleFloat 3s ease-in-out infinite;
+    will-change: transform;
 }
 
 @keyframes titleFloat {
@@ -337,9 +337,8 @@ body {
     z-index: 3;
     margin-top: 24px;
     padding: 12px 36px;
-    background: rgba(0, 0, 0, 0.25);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    background: rgba(0, 30, 60, 0.55);
+    /* backdrop-filter removed for Smart TV performance */
     border-radius: 40px;
     border: 1px solid rgba(255, 255, 255, 0.15);
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
@@ -395,7 +394,7 @@ body {
     border-radius: 25px;
     cursor: pointer;
     outline: none;
-    transition: all 0.15s var(--smooth);
+    transition: transform 0.15s var(--smooth), box-shadow 0.15s var(--smooth);
     position: relative;
     color: white;
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
@@ -405,6 +404,7 @@ body {
     transform: translateY(0);
     /* Thick cartoon outline */
     border: 4px solid rgba(0, 0, 0, 0.15);
+    will-change: transform;
 }
 
 /* Glass highlight on top */
@@ -438,7 +438,7 @@ body {
 .menu-btn:focus,
 .menu-btn.focused {
     transform: translateY(-4px) scale(1.05);
-    filter: brightness(1.15);
+    /* filter: brightness removed for Smart TV performance - use transform only */
 }
 
 .menu-btn:active {
@@ -591,15 +591,11 @@ body {
     gap: 30px;
     width: 750px;
     padding: 50px 60px;
-    background: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(25px);
-    -webkit-backdrop-filter: blur(25px);
+    background: rgba(80, 50, 130, 0.7);
+    /* backdrop-filter removed for Smart TV performance */
     border-radius: 40px;
     border: 2px solid rgba(255, 255, 255, 0.2);
-    box-shadow:
-        0 25px 80px rgba(0, 0, 0, 0.4),
-        0 0 0 1px rgba(255, 255, 255, 0.05),
-        inset 0 1px 0 rgba(255, 255, 255, 0.15);
+    box-shadow: 0 25px 80px rgba(0, 0, 0, 0.4);
     animation: tutorialCardIn 0.7s var(--elastic);
 }
 
@@ -809,8 +805,7 @@ body {
     position: relative;
     overflow: hidden;
     border: 4px solid rgba(255, 255, 255, 0.3);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
+    /* backdrop-filter removed for Smart TV performance */
     background: rgba(255, 255, 255, 0.08);
 }
 
@@ -973,8 +968,7 @@ body {
     font-size: 26px;
     padding: 16px 40px;
     background: rgba(0,0,0,0.5);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
+    /* backdrop-filter removed for Smart TV performance */
     border: 3px solid rgba(255,255,255,0.3);
 }
 
@@ -1028,8 +1022,7 @@ body {
     color: var(--gold);
     text-shadow: 0 3px 10px rgba(0, 0, 0, 0.4);
     background: rgba(0, 0, 0, 0.3);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
+    /* backdrop-filter removed for Smart TV performance */
     padding: 10px 28px;
     border-radius: 30px;
     border: 2px solid rgba(255, 215, 0, 0.3);
@@ -1140,8 +1133,7 @@ body {
     left: 50%;
     transform: translateX(-50%);
     background: rgba(0, 0, 0, 0.75);
-    backdrop-filter: blur(15px);
-    -webkit-backdrop-filter: blur(15px);
+    /* backdrop-filter removed for Smart TV performance */
     border-radius: 20px;
     padding: 18px 45px;
     color: white;
@@ -1338,8 +1330,7 @@ body {
     justify-content: center;
     position: relative;
     background: rgba(255, 255, 255, 0.15);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
+    /* backdrop-filter removed for Smart TV performance */
     border: 2px solid rgba(255, 255, 255, 0.2);
     color: white;
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
@@ -1395,8 +1386,7 @@ body {
     align-items: center;
     gap: 12px;
     background: rgba(0, 0, 0, 0.6);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    /* backdrop-filter removed for Smart TV performance */
     padding: 12px 28px 12px 20px;
     border-radius: 0 30px 30px 0;
     border: 2px solid rgba(255, 255, 255, 0.15);
@@ -1879,8 +1869,7 @@ body {
     width: 100%;
     height: 100%;
     background: rgba(0, 0, 0, 0.65);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    /* backdrop-filter removed for Smart TV performance */
     z-index: 0;
 }
 
@@ -1892,8 +1881,7 @@ body {
     align-items: center;
     gap: 30px;
     background: rgba(255, 255, 255, 0.08);
-    backdrop-filter: blur(25px);
-    -webkit-backdrop-filter: blur(25px);
+    /* backdrop-filter removed for Smart TV performance */
     border-radius: 40px;
     padding: 50px 70px;
     border: 2px solid rgba(255, 255, 255, 0.15);
@@ -1952,8 +1940,7 @@ body {
         rgba(131, 56, 236, 0.1) 40%,
         rgba(0, 0, 0, 0.85) 100%
     );
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
+    /* backdrop-filter removed for Smart TV performance */
 }
 
 .complete-container {
@@ -2014,8 +2001,7 @@ body {
     align-items: center;
     gap: 8px;
     background: rgba(255, 255, 255, 0.08);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
+    /* backdrop-filter removed for Smart TV performance */
     border-radius: 24px;
     padding: 22px 35px;
     border: 1px solid rgba(255, 255, 255, 0.12);
@@ -2175,8 +2161,7 @@ body {
 /* Achievement Card */
 .achievement-card {
     background: rgba(255, 255, 255, 0.06);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
+    /* backdrop-filter removed for Smart TV performance */
     border-radius: 20px;
     padding: 24px 20px;
     display: flex;
@@ -2272,8 +2257,7 @@ body {
     color: var(--gold);
     text-shadow: 0 2px 8px rgba(255, 215, 0, 0.3);
     background: rgba(0, 0, 0, 0.3);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
+    /* backdrop-filter removed for Smart TV performance */
     padding: 10px 30px;
     border-radius: 30px;
     border: 1px solid rgba(255, 215, 0, 0.15);
@@ -2292,8 +2276,7 @@ body {
     align-items: center;
     gap: 16px;
     background: rgba(20, 20, 40, 0.9);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
+    /* backdrop-filter removed for Smart TV performance */
     border-radius: 20px;
     padding: 18px 28px;
     border: 2px solid rgba(255, 215, 0, 0.35);
@@ -2408,8 +2391,7 @@ body {
 
 .settings-container {
     background: rgba(255, 255, 255, 0.08);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
+    /* backdrop-filter removed for Smart TV performance */
     border-radius: 30px;
     padding: 40px 60px;
     min-width: 600px;
@@ -2681,8 +2663,7 @@ button:focus-visible,
     justify-content: center;
     z-index: 50;
     background: rgba(0, 0, 0, 0.6);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
+    /* backdrop-filter removed for Smart TV performance */
 }
 
 .countdown-number {
@@ -2734,8 +2715,7 @@ button:focus-visible,
     justify-content: center;
     z-index: 90;
     background: rgba(0, 0, 0, 0.7);
-    backdrop-filter: blur(15px);
-    -webkit-backdrop-filter: blur(15px);
+    /* backdrop-filter removed for Smart TV performance */
     animation: fadeIn 0.4s var(--smooth);
 }
 
@@ -2750,8 +2730,7 @@ button:focus-visible,
     align-items: center;
     gap: 20px;
     background: linear-gradient(180deg, rgba(255, 215, 0, 0.15), rgba(131, 56, 236, 0.1));
-    backdrop-filter: blur(25px);
-    -webkit-backdrop-filter: blur(25px);
+    /* backdrop-filter removed for Smart TV performance */
     border-radius: 40px;
     padding: 50px 80px;
     border: 3px solid rgba(255, 215, 0, 0.4);
@@ -2827,8 +2806,7 @@ button:focus-visible,
     justify-content: center;
     z-index: 95;
     background: rgba(0, 0, 0, 0.7);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    /* backdrop-filter removed for Smart TV performance */
 }
 
 .sticker-popup-content {
@@ -2837,8 +2815,7 @@ button:focus-visible,
     align-items: center;
     gap: 16px;
     background: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(25px);
-    -webkit-backdrop-filter: blur(25px);
+    /* backdrop-filter removed for Smart TV performance */
     border-radius: 35px;
     padding: 45px 70px;
     border: 3px solid rgba(255, 215, 0, 0.3);
@@ -2927,8 +2904,7 @@ button:focus-visible,
 
 .sticker-card {
     background: rgba(255, 255, 255, 0.06);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
+    /* backdrop-filter removed for Smart TV performance */
     border-radius: 24px;
     padding: 24px 16px;
     display: flex;
@@ -2992,8 +2968,7 @@ button:focus-visible,
     color: var(--gold);
     text-shadow: 0 2px 8px rgba(255, 215, 0, 0.3);
     background: rgba(0, 0, 0, 0.3);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
+    /* backdrop-filter removed for Smart TV performance */
     padding: 10px 30px;
     border-radius: 30px;
     border: 1px solid rgba(255, 215, 0, 0.15);
@@ -3024,8 +2999,7 @@ button:focus-visible,
 
 .parent-stat-card {
     background: rgba(255, 255, 255, 0.06);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
+    /* backdrop-filter removed for Smart TV performance */
     border-radius: 24px;
     padding: 28px 24px;
     display: flex;
@@ -3300,8 +3274,7 @@ button:focus-visible,
 /* Cartoon panel frame for settings */
 .settings-container {
     background: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
+    /* backdrop-filter removed for Smart TV performance */
     border-radius: 35px;
     padding: 40px 60px;
     min-width: 600px;
@@ -3324,8 +3297,7 @@ button:focus-visible,
     align-items: center;
     gap: 30px;
     background: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(25px);
-    -webkit-backdrop-filter: blur(25px);
+    /* backdrop-filter removed for Smart TV performance */
     border-radius: 40px;
     padding: 50px 70px;
     /* Cartoon frame */

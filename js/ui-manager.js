@@ -53,6 +53,57 @@ class UIManager {
         // Track previously unlocked achievements for diffing
         this._previouslyUnlocked = new Set();
 
+        // Performance: cache frequently accessed DOM elements
+        this._dom = {
+            hudLevel: document.getElementById('hud-level'),
+            hudScore: document.getElementById('hud-score'),
+            hudStreak: document.getElementById('hud-streak'),
+            streakFire: document.getElementById('streak-fire'),
+            hudStars: [
+                document.getElementById('hud-star-1'),
+                document.getElementById('hud-star-2'),
+                document.getElementById('hud-star-3')
+            ],
+            progressBar: document.getElementById('progress-bar'),
+            progressText: document.getElementById('progress-text'),
+            problemNumber: document.getElementById('problem-number'),
+            timerBar: document.getElementById('timer-bar'),
+            problemContainer: document.getElementById('problem-container'),
+            problemText: document.getElementById('problem-text'),
+            answerOptions: document.getElementById('answer-options'),
+            problemCharacter: document.getElementById('problem-character'),
+            proximityBar: document.getElementById('proximity-bar'),
+            proximityFill: document.getElementById('proximity-fill'),
+            feedbackOverlay: document.getElementById('feedback-overlay'),
+            feedbackContent: document.getElementById('feedback-content'),
+            feedbackPoints: document.getElementById('feedback-points'),
+            comboDisplay: document.getElementById('combo-display'),
+            comboCount: document.getElementById('combo-count'),
+            powerIndicator: document.getElementById('power-indicator'),
+            powerIcon: document.getElementById('power-icon'),
+            powerText: document.getElementById('power-text'),
+            hudHint: document.getElementById('hud-hint'),
+            hudCharEmoji: document.getElementById('hud-char-emoji'),
+            hudCharMood: document.getElementById('hud-char-mood'),
+            achievementToast: document.getElementById('achievement-toast'),
+            toastIcon: document.getElementById('toast-icon'),
+            toastTitle: document.getElementById('toast-title'),
+            toastDesc: document.getElementById('toast-desc'),
+            // VS AI
+            vsaiThinkingFill: document.getElementById('vsai-thinking-fill'),
+            vsaiThinkingText: document.getElementById('vsai-thinking-text'),
+            vsaiPlayerScore: document.getElementById('vsai-player-score'),
+            vsaiAiScore: document.getElementById('vsai-ai-score'),
+            vsaiRoundNum: document.getElementById('vsai-round-num'),
+            vsaiRoundOf: document.getElementById('vsai-round-of'),
+            vsaiProblemText: document.getElementById('vsai-problem-text'),
+            vsaiAnswerOptions: document.getElementById('vsai-answer-options'),
+            vsaiRoundResult: document.getElementById('vsai-round-result'),
+            vsaiResultIcon: document.getElementById('vsai-result-icon'),
+            vsaiResultText: document.getElementById('vsai-result-text'),
+            vsaiResultTaunt: document.getElementById('vsai-result-taunt')
+        };
+
         this._initCharacterGrid();
         this._initEventListeners();
         this._applySettings();
@@ -77,16 +128,15 @@ class UIManager {
         } else {
             // Different screen - animate transition
 
-            // Exit animation on old screen
-            Object.entries(this.screens).forEach(([key, s]) => {
-                if (s && s.classList.contains('active')) {
-                    s.classList.add(goingForward ? 'slide-out-left' : 'slide-out-right');
-                    setTimeout(() => {
-                        s.classList.remove('active', 'slide-out-left', 'slide-out-right',
-                            'slide-in-left', 'slide-in-right', 'zoom-in', 'zoom-out');
-                    }, 400);
-                }
-            });
+            // Exit animation on old screen - only target the current active screen
+            const activeScreen = this.screens[prevScreen];
+            if (activeScreen && activeScreen.classList.contains('active')) {
+                activeScreen.classList.add(goingForward ? 'slide-out-left' : 'slide-out-right');
+                setTimeout(() => {
+                    activeScreen.classList.remove('active', 'slide-out-left', 'slide-out-right',
+                        'slide-in-left', 'slide-in-right', 'zoom-in', 'zoom-out');
+                }, 400);
+            }
 
             // Entrance animation on new screen
             const delay = prevScreen ? 150 : 0;
@@ -560,8 +610,8 @@ class UIManager {
 
     _updateCharacterPortrait() {
         const portrait = document.getElementById('hud-character-portrait');
-        const emoji = document.getElementById('hud-char-emoji');
-        const mood = document.getElementById('hud-char-mood');
+        const emoji = this._dom.hudCharEmoji;
+        const mood = this._dom.hudCharMood;
         if (!portrait || !emoji) return;
 
         const char = this.game.selectedCharacter;
@@ -574,7 +624,7 @@ class UIManager {
 
     setCharacterMood(moodType) {
         const portrait = document.getElementById('hud-character-portrait');
-        const mood = document.getElementById('hud-char-mood');
+        const mood = this._dom.hudCharMood;
         const char = this.game.selectedCharacter;
         if (!portrait || !char) return;
 
@@ -601,47 +651,37 @@ class UIManager {
     }
 
     _updateHud() {
-        document.getElementById('hud-level').textContent = this.game.currentLevel.num;
-        document.getElementById('hud-score').textContent = Utils.formatNumber(this.game.score);
-        document.getElementById('hud-streak').textContent = this.game.streak;
+        this._dom.hudLevel.textContent = this.game.currentLevel.num;
+        this._dom.hudScore.textContent = Utils.formatNumber(this.game.score);
+        this._dom.hudStreak.textContent = this.game.streak;
 
         // Stars
         const thresholds = this.game.currentLevel.starThresholds;
-        for (let i = 1; i <= 3; i++) {
-            const star = document.getElementById(`hud-star-${i}`);
-            star.classList.toggle('earned', this.game.correctCount >= thresholds[i - 1]);
+        for (let i = 0; i < 3; i++) {
+            this._dom.hudStars[i].classList.toggle('earned', this.game.correctCount >= thresholds[i]);
         }
 
         // Streak fire
-        const fire = document.getElementById('streak-fire');
-        fire.classList.toggle('active', this.game.streak >= 3);
+        this._dom.streakFire.classList.toggle('active', this.game.streak >= 3);
     }
 
     _updateProgress() {
         const current = this.game.currentProblemIndex + 1;
         const total = this.game.problems.length;
 
-        const progressBar = document.getElementById('progress-bar');
-        const progressText = document.getElementById('progress-text');
-
-        if (progressBar) {
-            const pct = (current / total) * 100;
-            progressBar.style.width = `${pct}%`;
+        if (this._dom.progressBar) {
+            this._dom.progressBar.style.width = `${(current / total) * 100}%`;
         }
-
-        if (progressText) {
-            progressText.textContent = `Question ${current} of ${total}`;
+        if (this._dom.progressText) {
+            this._dom.progressText.textContent = `Question ${current} of ${total}`;
         }
-
-        // Update problem number display
-        const problemNumber = document.getElementById('problem-number');
-        if (problemNumber) {
-            problemNumber.textContent = `Question ${current}`;
+        if (this._dom.problemNumber) {
+            this._dom.problemNumber.textContent = `Question ${current}`;
         }
     }
 
     _showHintButton() {
-        const hintBtn = document.getElementById('hud-hint');
+        const hintBtn = this._dom.hudHint;
         if (!hintBtn) return;
 
         const char = this.game.selectedCharacter;
@@ -712,8 +752,7 @@ class UIManager {
         });
 
         // Hide hint button after use
-        const hintBtn = document.getElementById('hud-hint');
-        if (hintBtn) hintBtn.style.display = 'none';
+        if (this._dom.hudHint) this._dom.hudHint.style.display = 'none';
 
         audio.playSelect();
     }
@@ -722,10 +761,10 @@ class UIManager {
         const problem = this.game.getCurrentProblem();
         if (!problem) return;
 
-        const container = document.getElementById('problem-container');
-        const problemText = document.getElementById('problem-text');
-        const options = document.getElementById('answer-options');
-        const charDisplay = document.getElementById('problem-character');
+        const container = this._dom.problemContainer;
+        const problemText = this._dom.problemText;
+        const options = this._dom.answerOptions;
+        const charDisplay = this._dom.problemCharacter;
 
         // Set character
         if (this.game.selectedCharacter) {
@@ -738,10 +777,10 @@ class UIManager {
         // Set answer options
         options.innerHTML = '';
         this.selectedAnswerIndex = 0;
+        this._lastTimerState = null;
 
         // Hide proximity bar by default
-        const proximityBar = document.getElementById('proximity-bar');
-        if (proximityBar) proximityBar.style.display = 'none';
+        if (this._dom.proximityBar) this._dom.proximityBar.style.display = 'none';
 
         problem.options.forEach((opt, i) => {
             const btn = document.createElement('button');
@@ -921,23 +960,27 @@ class UIManager {
     }
 
     _updateTimer(remaining, max) {
-        const bar = document.getElementById('timer-bar');
+        const bar = this._dom.timerBar;
+        if (!bar) return;
         const pct = Math.max(0, (remaining / max) * 100);
         bar.style.width = `${pct}%`;
 
-        // Color change when low
-        if (pct < 25) {
+        // Only change gradient when crossing thresholds
+        if (pct < 25 && this._lastTimerState !== 'low') {
             bar.style.background = 'linear-gradient(90deg, #ef476f, #ff6b8a)';
-        } else if (pct < 50) {
+            this._lastTimerState = 'low';
+        } else if (pct >= 25 && pct < 50 && this._lastTimerState !== 'mid') {
             bar.style.background = 'linear-gradient(90deg, #ffd166, #ffaa33)';
-        } else {
+            this._lastTimerState = 'mid';
+        } else if (pct >= 50 && this._lastTimerState !== 'high') {
             bar.style.background = 'linear-gradient(90deg, #06d6a0, #ffd166, #ef476f)';
+            this._lastTimerState = 'high';
         }
     }
 
     _showFeedback(type, message) {
-        const overlay = document.getElementById('feedback-overlay');
-        const content = document.getElementById('feedback-content');
+        const overlay = this._dom.feedbackOverlay;
+        const content = this._dom.feedbackContent;
 
         content.className = `feedback-content ${type}`;
         content.textContent = message;
@@ -972,7 +1015,7 @@ class UIManager {
     // ---- Points Popup ----
 
     _showPointsPopup(points) {
-        const feedbackPoints = document.getElementById('feedback-points');
+        const feedbackPoints = this._dom.feedbackPoints;
         if (!feedbackPoints) return;
 
         feedbackPoints.textContent = `+${Utils.formatNumber(points)} pts`;
@@ -993,8 +1036,8 @@ class UIManager {
     // ---- Combo Display ----
 
     _updateComboDisplay() {
-        const comboDisplay = document.getElementById('combo-display');
-        const comboCount = document.getElementById('combo-count');
+        const comboDisplay = this._dom.comboDisplay;
+        const comboCount = this._dom.comboCount;
         if (!comboDisplay || !comboCount) return;
 
         if (this.game.streak >= 3) {
@@ -1013,7 +1056,7 @@ class UIManager {
     }
 
     _hideComboDisplay() {
-        const comboDisplay = document.getElementById('combo-display');
+        const comboDisplay = this._dom.comboDisplay;
         if (comboDisplay) {
             comboDisplay.style.display = 'none';
             comboDisplay.style.transform = 'scale(1)';
@@ -1023,7 +1066,7 @@ class UIManager {
     // ---- Character Reactions ----
 
     _showCharacterReaction(reactionType) {
-        const charDisplay = document.getElementById('problem-character');
+        const charDisplay = this._dom.problemCharacter;
         if (!charDisplay || !this.game.selectedCharacter) return;
 
         const char = this.game.selectedCharacter;
@@ -1075,9 +1118,9 @@ class UIManager {
     }
 
     _showPowerActivation(icon, text) {
-        const indicator = document.getElementById('power-indicator');
-        const iconEl = document.getElementById('power-icon');
-        const textEl = document.getElementById('power-text');
+        const indicator = this._dom.powerIndicator;
+        const iconEl = this._dom.powerIcon;
+        const textEl = this._dom.powerText;
 
         if (!indicator || !iconEl || !textEl) return;
 
@@ -1095,7 +1138,7 @@ class UIManager {
     }
 
     _hidePowerIndicator() {
-        const indicator = document.getElementById('power-indicator');
+        const indicator = this._dom.powerIndicator;
         if (indicator) {
             indicator.style.display = 'none';
             indicator.classList.remove('power-show');
@@ -1108,8 +1151,8 @@ class UIManager {
         const char = this.game.selectedCharacter;
         if (!char || char.bonusType !== 'proximity') return;
 
-        const proximityBar = document.getElementById('proximity-bar');
-        const proximityFill = document.getElementById('proximity-fill');
+        const proximityBar = this._dom.proximityBar;
+        const proximityFill = this._dom.proximityFill;
         if (!proximityBar || !proximityFill) return;
 
         // Show proximity bar
@@ -1325,10 +1368,10 @@ class UIManager {
         this._isShowingToast = true;
         const achievement = this._toastQueue.shift();
 
-        const toast = document.getElementById('achievement-toast');
-        const toastIcon = document.getElementById('toast-icon');
-        const toastTitle = document.getElementById('toast-title');
-        const toastDesc = document.getElementById('toast-desc');
+        const toast = this._dom.achievementToast;
+        const toastIcon = this._dom.toastIcon;
+        const toastTitle = this._dom.toastTitle;
+        const toastDesc = this._dom.toastDesc;
 
         if (!toast) {
             this._processToastQueue();

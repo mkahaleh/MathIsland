@@ -182,17 +182,18 @@ class InputHandler {
 
         let bestIndex = currentIndex;
         let bestDistance = Infinity;
+        const isVertical = direction === 'up' || direction === 'down';
 
-        elements.forEach((el, i) => {
-            if (i === currentIndex) return;
+        for (let i = 0; i < elements.length; i++) {
+            if (i === currentIndex) continue;
 
-            const rect = el.getBoundingClientRect();
+            const rect = elements[i].getBoundingClientRect();
             const ex = rect.left + rect.width / 2;
             const ey = rect.top + rect.height / 2;
             const dx = ex - cx;
             const dy = ey - cy;
 
-            let isValid = false;
+            let isValid;
             switch (direction) {
                 case 'up':    isValid = dy < -10; break;
                 case 'down':  isValid = dy > 10; break;
@@ -201,10 +202,8 @@ class InputHandler {
             }
 
             if (isValid) {
-                const primaryDist = direction === 'up' || direction === 'down'
-                    ? Math.abs(dy) : Math.abs(dx);
-                const crossDist = direction === 'up' || direction === 'down'
-                    ? Math.abs(dx) : Math.abs(dy);
+                const primaryDist = isVertical ? Math.abs(dy) : Math.abs(dx);
+                const crossDist = isVertical ? Math.abs(dx) : Math.abs(dy);
                 const weightedDist = primaryDist + crossDist * 3;
 
                 if (weightedDist < bestDistance) {
@@ -212,7 +211,7 @@ class InputHandler {
                     bestIndex = i;
                 }
             }
-        });
+        }
 
         return bestIndex;
     }

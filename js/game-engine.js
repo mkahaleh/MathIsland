@@ -75,6 +75,16 @@ class GameEngine {
         this.lastFrameTime = performance.now();
         this.isRunning = true;
 
+        // Performance: FPS throttling at 30fps for Smart TV
+        this._targetFrameInterval = 1000 / 30; // 30 FPS target for Smart TV
+        this._lastRenderTime = 0;
+
+        // Performance: cache character select gradient
+        this._charSelectGrad = this.ctx.createLinearGradient(0, 0, 0, this.canvas.height);
+        this._charSelectGrad.addColorStop(0, '#ffecd2');
+        this._charSelectGrad.addColorStop(0.5, '#fcb69f');
+        this._charSelectGrad.addColorStop(1, '#ee7752');
+
         this._gameLoop = this._gameLoop.bind(this);
         requestAnimationFrame(this._gameLoop);
     }
@@ -84,8 +94,16 @@ class GameEngine {
     _gameLoop(now) {
         if (!this.isRunning) return;
 
+        // FPS throttling: skip frames if too fast for Smart TV
+        const elapsed = now - this._lastRenderTime;
+        if (elapsed < this._targetFrameInterval) {
+            requestAnimationFrame(this._gameLoop);
+            return;
+        }
+
         const dt = Math.min((now - this.lastFrameTime) / 1000, 0.05);
         this.lastFrameTime = now;
+        this._lastRenderTime = now;
 
         // Skip animation updates when paused
         if (!this.isPaused) {
@@ -108,16 +126,10 @@ class GameEngine {
                 this.renderer.drawIslandMap(this.progress);
                 break;
             case 'playing':
-                this._drawPlayingScene();
-                break;
             case 'vsAiPlaying':
-                this._drawPlayingScene();
-                break;
             case 'vsAiComplete':
-                this._drawPlayingScene();
-                break;
             case 'levelComplete':
-                this._drawPlayingScene(); // Keep background
+                this._drawPlayingScene();
                 break;
         }
 
@@ -126,11 +138,8 @@ class GameEngine {
 
     _drawCharacterSelectBg() {
         const ctx = this.ctx;
-        const grad = ctx.createLinearGradient(0, 0, 0, this.canvas.height);
-        grad.addColorStop(0, '#ffecd2');
-        grad.addColorStop(0.5, '#fcb69f');
-        grad.addColorStop(1, '#ee7752');
-        ctx.fillStyle = grad;
+        // Use cached gradient
+        ctx.fillStyle = this._charSelectGrad;
         ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
         // Floating characters decoration
@@ -346,7 +355,7 @@ class GameEngine {
         // Track performance for adaptive difficulty
         this._performanceHistory.push(isCorrect);
         if (this._performanceHistory.length > 10) {
-            this._performanceHistory.shift();
+            this._performanceHistory = this._performanceHistory.slice(-10);
         }
         this._updateAdaptiveDifficulty();
 

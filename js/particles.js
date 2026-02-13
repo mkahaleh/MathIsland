@@ -109,11 +109,11 @@ class Particle {
         ctx.rotate(this.rotation);
         ctx.scale(this.scale, this.scale);
 
-        // Optional glow
-        if (this.glow && this.glowSize > 0) {
-            ctx.shadowColor = this.color;
-            ctx.shadowBlur = this.glowSize * this.scale;
-        }
+        // Glow disabled for Smart TV performance (shadowBlur is expensive)
+        // if (this.glow && this.glowSize > 0) {
+        //     ctx.shadowColor = this.color;
+        //     ctx.shadowBlur = this.glowSize * this.scale;
+        // }
 
         if (this.shape === 'circle') {
             ctx.beginPath();
@@ -191,7 +191,7 @@ class ParticleSystem {
         this.emitters = [];
         this.running = true;
         this.lastTime = performance.now();
-        this.MAX_PARTICLES = 300; // Cap for TV hardware performance
+        this.MAX_PARTICLES = 100; // Reduced from 300 for Smart TV performance
 
         // Ambient system state
         this._ambientInterval = null;
@@ -210,11 +210,17 @@ class ParticleSystem {
         const dt = Math.min((now - this.lastTime) / 1000, 0.05);
         this.lastTime = now;
 
+        // Performance: skip frame if no particles or emitters active
+        if (this.particles.length === 0 && this.emitters.length === 0) {
+            requestAnimationFrame(this._animate);
+            return;
+        }
+
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
         // Performance: cap particle count for TV hardware
         if (this.particles.length > this.MAX_PARTICLES) {
-            this.particles.splice(0, this.particles.length - this.MAX_PARTICLES);
+            this.particles.length = this.MAX_PARTICLES;
         }
 
         // Update emitters
@@ -230,9 +236,10 @@ class ParticleSystem {
         for (let i = this.particles.length - 1; i >= 0; i--) {
             const p = this.particles[i];
             p.update(dt);
-            p.draw(this.ctx);
             if (p.isDead) {
                 this.particles.splice(i, 1);
+            } else {
+                p.draw(this.ctx);
             }
         }
 
@@ -262,8 +269,8 @@ class ParticleSystem {
     correctBurst(x, y, scoreText) {
         const colors = ['#06d6a0', '#ffd166', '#00b4d8', '#ffffff'];
 
-        // Main burst particles
-        for (let i = 0; i < 30; i++) {
+        // Main burst particles - reduced from 30 to 12
+        for (let i = 0; i < 12; i++) {
             this.particles.push(new Particle(
                 x + Utils.randomFloat(-20, 20),
                 y + Utils.randomFloat(-20, 20),
@@ -322,9 +329,9 @@ class ParticleSystem {
     starExplosion(x, y) {
         const colors = ['#ffd700', '#ffed4a', '#fff7b2', '#ffffff'];
 
-        // Main radial burst
-        for (let i = 0; i < 50; i++) {
-            const angle = (i / 50) * Math.PI * 2;
+        // Main radial burst - reduced from 50 to 16
+        for (let i = 0; i < 16; i++) {
+            const angle = (i / 16) * Math.PI * 2;
             const speed = Utils.randomFloat(3, 10);
             this.particles.push(new Particle(x, y, {
                 vx: Math.cos(angle) * speed,
@@ -340,9 +347,9 @@ class ParticleSystem {
             }));
         }
 
-        // Inner ring - fast expanding circle of particles
-        for (let i = 0; i < 24; i++) {
-            const angle = (i / 24) * Math.PI * 2;
+        // Inner ring - reduced from 24 to 8
+        for (let i = 0; i < 8; i++) {
+            const angle = (i / 8) * Math.PI * 2;
             const speed = 12;
             this.particles.push(new Particle(x, y, {
                 vx: Math.cos(angle) * speed,
@@ -358,9 +365,9 @@ class ParticleSystem {
             }));
         }
 
-        // Outer ring - slower expanding
-        for (let i = 0; i < 16; i++) {
-            const angle = (i / 16) * Math.PI * 2;
+        // Outer ring - reduced from 16 to 6
+        for (let i = 0; i < 6; i++) {
+            const angle = (i / 6) * Math.PI * 2;
             const speed = 6;
             this.particles.push(new Particle(x, y, {
                 vx: Math.cos(angle) * speed,
@@ -398,7 +405,8 @@ class ParticleSystem {
         const colors = ['#ef476f', '#ffd166', '#06d6a0', '#118ab2', '#8338ec', '#ff6b35'];
         const shapes = ['square', 'circle', 'heart', 'diamond'];
         const interval = setInterval(() => {
-            for (let i = 0; i < 5; i++) {
+            // Reduced from 5 to 2 confetti per tick
+            for (let i = 0; i < 2; i++) {
                 this.particles.push(new Particle(
                     Utils.randomFloat(0, this.width),
                     -20,

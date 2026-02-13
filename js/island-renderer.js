@@ -15,10 +15,82 @@ class IslandRenderer {
         this.waves = [];
         this.stars = [];
 
+        // Performance: frame skipping for expensive effects
+        this._frameCount = 0;
+        this._lastScene = null;
+        this._sceneChanged = true;
+
+        // Performance: cache gradients
+        this._cachedGradients = {};
+
         this._initClouds();
         this._initWaves();
         this._initStars();
         this._initNoiseTexture();
+        this._initCachedGradients();
+    }
+
+    // Pre-create gradients that don't change between frames
+    _initCachedGradients() {
+        const ctx = this.ctx;
+
+        // Vignette gradients at different intensities
+        this._vignetteCache = {};
+
+        // Sky gradients for each zone
+        this._cachedGradients.menuSky = ctx.createLinearGradient(0, 0, 0, this.height);
+        this._cachedGradients.menuSky.addColorStop(0, '#6dd5ed');
+        this._cachedGradients.menuSky.addColorStop(0.25, '#00b4d8');
+        this._cachedGradients.menuSky.addColorStop(0.55, '#0077b6');
+        this._cachedGradients.menuSky.addColorStop(0.8, '#023e8a');
+        this._cachedGradients.menuSky.addColorStop(1, '#01226b');
+
+        this._cachedGradients.beachSky = ctx.createLinearGradient(0, 0, 0, this.height);
+        this._cachedGradients.beachSky.addColorStop(0, '#87ceeb');
+        this._cachedGradients.beachSky.addColorStop(0.4, '#48cae4');
+        this._cachedGradients.beachSky.addColorStop(0.7, '#ffd166');
+        this._cachedGradients.beachSky.addColorStop(1, '#f4a261');
+
+        this._cachedGradients.jungleSky = ctx.createLinearGradient(0, 0, 0, this.height);
+        this._cachedGradients.jungleSky.addColorStop(0, '#1b4332');
+        this._cachedGradients.jungleSky.addColorStop(0.3, '#2d6a4f');
+        this._cachedGradients.jungleSky.addColorStop(0.7, '#40916c');
+        this._cachedGradients.jungleSky.addColorStop(1, '#1b4332');
+
+        this._cachedGradients.volcanoSky = ctx.createLinearGradient(0, 0, 0, this.height);
+        this._cachedGradients.volcanoSky.addColorStop(0, '#0a0000');
+        this._cachedGradients.volcanoSky.addColorStop(0.2, '#3a0000');
+        this._cachedGradients.volcanoSky.addColorStop(0.5, '#8b0000');
+        this._cachedGradients.volcanoSky.addColorStop(0.75, '#d00000');
+        this._cachedGradients.volcanoSky.addColorStop(1, '#faa307');
+
+        this._cachedGradients.skySky = ctx.createLinearGradient(0, 0, 0, this.height);
+        this._cachedGradients.skySky.addColorStop(0, '#e0f7ff');
+        this._cachedGradients.skySky.addColorStop(0.3, '#87ceeb');
+        this._cachedGradients.skySky.addColorStop(0.7, '#caf0f8');
+        this._cachedGradients.skySky.addColorStop(1, '#e0f7ff');
+
+        this._cachedGradients.spaceSky = ctx.createLinearGradient(0, 0, 0, this.height);
+        this._cachedGradients.spaceSky.addColorStop(0, '#050a18');
+        this._cachedGradients.spaceSky.addColorStop(0.3, '#0d1b2a');
+        this._cachedGradients.spaceSky.addColorStop(0.7, '#1b263b');
+        this._cachedGradients.spaceSky.addColorStop(1, '#050a18');
+
+        this._cachedGradients.oceanMap = ctx.createLinearGradient(0, 0, 0, this.height);
+        this._cachedGradients.oceanMap.addColorStop(0, '#6dd5ed');
+        this._cachedGradients.oceanMap.addColorStop(0.15, '#48cae4');
+        this._cachedGradients.oceanMap.addColorStop(0.4, '#0096c7');
+        this._cachedGradients.oceanMap.addColorStop(0.7, '#0077b6');
+        this._cachedGradients.oceanMap.addColorStop(1, '#023e8a');
+
+        // Pre-create bloom gradient (doesn't change)
+        this._cachedGradients.bloom = ctx.createRadialGradient(
+            this.width * 0.5, this.height * 0.35, 0,
+            this.width * 0.5, this.height * 0.35, this.width * 0.6
+        );
+        this._cachedGradients.bloom.addColorStop(0, 'rgba(255, 255, 240, 0.06)');
+        this._cachedGradients.bloom.addColorStop(0.5, 'rgba(255, 220, 180, 0.03)');
+        this._cachedGradients.bloom.addColorStop(1, 'transparent');
     }
 
     _initNoiseTexture() {
@@ -41,7 +113,8 @@ class IslandRenderer {
     }
 
     _initClouds() {
-        for (let i = 0; i < 10; i++) {
+        // Reduced from 10 to 6 clouds for performance
+        for (let i = 0; i < 6; i++) {
             this.clouds.push({
                 x: Utils.randomFloat(0, this.width),
                 y: Utils.randomFloat(30, 250),
@@ -54,7 +127,8 @@ class IslandRenderer {
     }
 
     _initWaves() {
-        for (let i = 0; i < 7; i++) {
+        // Reduced from 7 to 4 wave layers for performance
+        for (let i = 0; i < 4; i++) {
             this.waves.push({
                 y: this.height - 220 + i * 35,
                 amplitude: 6 + i * 3,
@@ -66,7 +140,8 @@ class IslandRenderer {
     }
 
     _initStars() {
-        for (let i = 0; i < 200; i++) {
+        // Reduced from 200 to 80 stars for performance
+        for (let i = 0; i < 80; i++) {
             this.stars.push({
                 x: Utils.randomFloat(0, this.width),
                 y: Utils.randomFloat(0, this.height),
@@ -79,12 +154,13 @@ class IslandRenderer {
 
     update(dt) {
         this.time += dt;
-        this.clouds.forEach(cloud => {
-            cloud.x += cloud.speed;
-            if (cloud.x > this.width + cloud.width) {
-                cloud.x = -cloud.width;
+        this._frameCount++;
+        for (let i = 0; i < this.clouds.length; i++) {
+            this.clouds[i].x += this.clouds[i].speed;
+            if (this.clouds[i].x > this.width + this.clouds[i].width) {
+                this.clouds[i].x = -this.clouds[i].width;
             }
-        });
+        }
     }
 
     drawScene(zone) {
@@ -103,14 +179,8 @@ class IslandRenderer {
     drawMenuBackground() {
         const ctx = this.ctx;
 
-        // Rich sky gradient
-        const skyGrad = ctx.createLinearGradient(0, 0, 0, this.height);
-        skyGrad.addColorStop(0, '#6dd5ed');
-        skyGrad.addColorStop(0.25, '#00b4d8');
-        skyGrad.addColorStop(0.55, '#0077b6');
-        skyGrad.addColorStop(0.8, '#023e8a');
-        skyGrad.addColorStop(1, '#01226b');
-        ctx.fillStyle = skyGrad;
+        // Use cached sky gradient
+        ctx.fillStyle = this._cachedGradients.menuSky;
         ctx.fillRect(0, 0, this.width, this.height);
 
         // Atmospheric light rays
@@ -147,12 +217,15 @@ class IslandRenderer {
     }
 
     _drawFloatingDecorations() {
+        // Only draw every other frame for performance
+        if (this._frameCount % 2 !== 0) return;
+
         const ctx = this.ctx;
         const t = this.time;
 
-        // Floating bubbles
-        for (let i = 0; i < 8; i++) {
-            const x = 150 + i * 220 + Math.sin(t * 0.5 + i * 1.3) * 30;
+        // Reduced bubbles from 8 to 4
+        for (let i = 0; i < 4; i++) {
+            const x = 150 + i * 440 + Math.sin(t * 0.5 + i * 1.3) * 30;
             const y = 200 + Math.sin(t * 0.3 + i * 0.9) * 80;
             const size = 12 + Math.sin(t + i) * 4;
             const alpha = 0.15 + Math.sin(t * 0.7 + i) * 0.08;
@@ -162,18 +235,12 @@ class IslandRenderer {
             ctx.arc(x, y, size, 0, Math.PI * 2);
             ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
             ctx.fill();
-
-            // Bubble highlight
-            ctx.beginPath();
-            ctx.arc(x - size * 0.3, y - size * 0.3, size * 0.25, 0, Math.PI * 2);
-            ctx.fillStyle = `rgba(255, 255, 255, ${alpha + 0.1})`;
-            ctx.fill();
             ctx.restore();
         }
 
-        // Floating star shapes
-        for (let i = 0; i < 5; i++) {
-            const x = 200 + i * 350 + Math.sin(t * 0.4 + i * 2) * 40;
+        // Reduced star shapes from 5 to 3
+        for (let i = 0; i < 3; i++) {
+            const x = 300 + i * 550 + Math.sin(t * 0.4 + i * 2) * 40;
             const y = 100 + Math.sin(t * 0.6 + i * 1.5) * 50;
             const size = 6 + Math.sin(t * 1.5 + i) * 2;
             const rotation = t * 0.5 + i;
@@ -223,12 +290,7 @@ class IslandRenderer {
     _drawBeach() {
         const ctx = this.ctx;
 
-        const sky = ctx.createLinearGradient(0, 0, 0, this.height);
-        sky.addColorStop(0, '#87ceeb');
-        sky.addColorStop(0.4, '#48cae4');
-        sky.addColorStop(0.7, '#ffd166');
-        sky.addColorStop(1, '#f4a261');
-        ctx.fillStyle = sky;
+        ctx.fillStyle = this._cachedGradients.beachSky;
         ctx.fillRect(0, 0, this.width, this.height);
 
         this._drawLightRays(1500, 120, 0.04);
@@ -251,9 +313,9 @@ class IslandRenderer {
         ctx.lineTo(0, this.height);
         ctx.fill();
 
-        // Sand sparkles
+        // Sand sparkles - reduced from 30 to 12
         ctx.save();
-        for (let i = 0; i < 30; i++) {
+        for (let i = 0; i < 12; i++) {
             const sx = (i * 67 + this.time * 5) % this.width;
             const sy = this.height * 0.7 + (i * 31) % (this.height * 0.25);
             const alpha = 0.2 + Math.sin(this.time * 3 + i) * 0.2;
@@ -277,12 +339,7 @@ class IslandRenderer {
     _drawJungle() {
         const ctx = this.ctx;
 
-        const sky = ctx.createLinearGradient(0, 0, 0, this.height);
-        sky.addColorStop(0, '#1b4332');
-        sky.addColorStop(0.3, '#2d6a4f');
-        sky.addColorStop(0.7, '#40916c');
-        sky.addColorStop(1, '#1b4332');
-        ctx.fillStyle = sky;
+        ctx.fillStyle = this._cachedGradients.jungleSky;
         ctx.fillRect(0, 0, this.width, this.height);
 
         // God rays through canopy
@@ -315,9 +372,9 @@ class IslandRenderer {
             this._drawJungleTree(i * 350 + 100, this.height * 0.7, 0.8 + Math.random() * 0.4);
         }
 
-        // Fireflies
+        // Fireflies - reduced from 25 to 10
         ctx.save();
-        for (let i = 0; i < 25; i++) {
+        for (let i = 0; i < 10; i++) {
             const fx = (i * 83 + Math.sin(this.time + i) * 40) % this.width;
             const fy = (i * 47 + Math.cos(this.time * 0.8 + i) * 30) % (this.height * 0.7);
             const alpha = 0.3 + Math.sin(this.time * 4 + i * 1.3) * 0.3;
@@ -386,9 +443,9 @@ class IslandRenderer {
             ctx.fill();
         }
 
-        // Dust particles
+        // Dust particles - reduced from 40 to 15
         ctx.save();
-        for (let i = 0; i < 40; i++) {
+        for (let i = 0; i < 15; i++) {
             const dx = (i * 53 + this.time * 15) % this.width;
             const dy = (i * 37 + Math.sin(this.time * 0.5 + i) * 50) % this.height;
             ctx.globalAlpha = 0.15 + Math.sin(this.time * 2 + i) * 0.1;
@@ -407,23 +464,10 @@ class IslandRenderer {
     _drawVolcano() {
         const ctx = this.ctx;
 
-        const sky = ctx.createLinearGradient(0, 0, 0, this.height);
-        sky.addColorStop(0, '#0a0000');
-        sky.addColorStop(0.2, '#3a0000');
-        sky.addColorStop(0.5, '#8b0000');
-        sky.addColorStop(0.75, '#d00000');
-        sky.addColorStop(1, '#faa307');
-        ctx.fillStyle = sky;
+        ctx.fillStyle = this._cachedGradients.volcanoSky;
         ctx.fillRect(0, 0, this.width, this.height);
 
-        // Heat shimmer
-        ctx.save();
-        ctx.globalAlpha = 0.03;
-        for (let y = 0; y < this.height; y += 4) {
-            const offset = Math.sin(y * 0.02 + this.time * 3) * 3;
-            ctx.drawImage(this.canvas, offset, y, this.width, 2, 0, y, this.width, 2);
-        }
-        ctx.restore();
+        // Heat shimmer removed - was reading/writing canvas every 4px (extremely expensive)
 
         // Volcano shape with detail
         const volcGrad = ctx.createLinearGradient(960, 100, 960, this.height);
@@ -477,12 +521,7 @@ class IslandRenderer {
     _drawSky() {
         const ctx = this.ctx;
 
-        const sky = ctx.createLinearGradient(0, 0, 0, this.height);
-        sky.addColorStop(0, '#e0f7ff');
-        sky.addColorStop(0.3, '#87ceeb');
-        sky.addColorStop(0.7, '#caf0f8');
-        sky.addColorStop(1, '#e0f7ff');
-        ctx.fillStyle = sky;
+        ctx.fillStyle = this._cachedGradients.skySky;
         ctx.fillRect(0, 0, this.width, this.height);
 
         this._drawRainbow(400, 300);
@@ -503,12 +542,7 @@ class IslandRenderer {
     _drawSpace() {
         const ctx = this.ctx;
 
-        const bg = ctx.createLinearGradient(0, 0, 0, this.height);
-        bg.addColorStop(0, '#050a18');
-        bg.addColorStop(0.3, '#0d1b2a');
-        bg.addColorStop(0.7, '#1b263b');
-        bg.addColorStop(1, '#050a18');
-        ctx.fillStyle = bg;
+        ctx.fillStyle = this._cachedGradients.spaceSky;
         ctx.fillRect(0, 0, this.width, this.height);
 
         this._drawStarField();
@@ -544,19 +578,29 @@ class IslandRenderer {
     // ========== HELPER FUNCTIONS ==========
 
     _drawVignette(intensity) {
+        // Skip vignette on most frames for performance
+        if (this._frameCount % 3 !== 0) return;
+
         const ctx = this.ctx;
-        const vig = ctx.createRadialGradient(
-            this.width / 2, this.height / 2, this.width * 0.3,
-            this.width / 2, this.height / 2, this.width * 0.75
-        );
-        vig.addColorStop(0, 'transparent');
-        vig.addColorStop(1, `rgba(0, 0, 0, ${intensity})`);
-        ctx.fillStyle = vig;
+        // Cache vignette gradients by intensity (rounded to avoid too many)
+        const key = Math.round(intensity * 20);
+        if (!this._vignetteCache[key]) {
+            this._vignetteCache[key] = ctx.createRadialGradient(
+                this.width / 2, this.height / 2, this.width * 0.3,
+                this.width / 2, this.height / 2, this.width * 0.75
+            );
+            this._vignetteCache[key].addColorStop(0, 'transparent');
+            this._vignetteCache[key].addColorStop(1, `rgba(0, 0, 0, ${intensity})`);
+        }
+        ctx.fillStyle = this._vignetteCache[key];
         ctx.fillRect(0, 0, this.width, this.height);
     }
 
-    // Unity-style post-processing pass
+    // Unity-style post-processing pass - runs every 3rd frame for performance
     _applyPostProcessing(warmth) {
+        // Skip post-processing on most frames for huge performance gain
+        if (this._frameCount % 3 !== 0) return;
+
         const ctx = this.ctx;
         warmth = warmth || 0.08;
 
@@ -569,24 +613,17 @@ class IslandRenderer {
             ctx.restore();
         }
 
-        // 2. Warm color grading (golden tint overlay like Unity post-processing)
+        // 2. Warm color grading (golden tint overlay)
         ctx.save();
         ctx.globalCompositeOperation = 'overlay';
         ctx.fillStyle = `rgba(255, 200, 100, ${warmth})`;
         ctx.fillRect(0, 0, this.width, this.height);
         ctx.restore();
 
-        // 3. Soft bloom / glow pass (bright center softness)
+        // 3. Soft bloom / glow pass - use cached gradient
         ctx.save();
         ctx.globalCompositeOperation = 'screen';
-        const bloom = ctx.createRadialGradient(
-            this.width * 0.5, this.height * 0.35, 0,
-            this.width * 0.5, this.height * 0.35, this.width * 0.6
-        );
-        bloom.addColorStop(0, 'rgba(255, 255, 240, 0.06)');
-        bloom.addColorStop(0.5, 'rgba(255, 220, 180, 0.03)');
-        bloom.addColorStop(1, 'transparent');
-        ctx.fillStyle = bloom;
+        ctx.fillStyle = this._cachedGradients.bloom;
         ctx.fillRect(0, 0, this.width, this.height);
         ctx.restore();
     }
@@ -596,9 +633,9 @@ class IslandRenderer {
         const ctx = this.ctx;
         ctx.save();
 
-        // Grass tufts along the bottom
-        for (let i = 0; i < 30; i++) {
-            const x = i * 68 + Math.sin(i * 1.7) * 20;
+        // Grass tufts along the bottom - reduced from 30 to 15
+        for (let i = 0; i < 15; i++) {
+            const x = i * 130 + Math.sin(i * 1.7) * 20;
             const y = groundY + Math.sin(i * 0.8) * 5;
             const h = 20 + (i * 7) % 25;
             const sway = Math.sin(this.time * 1.5 + i * 0.5) * 4;
@@ -621,10 +658,14 @@ class IslandRenderer {
     }
 
     _drawLightRays(x, y, alpha) {
+        // Only draw every other frame
+        if (this._frameCount % 2 !== 0) return;
+
         const ctx = this.ctx;
         ctx.save();
         ctx.globalAlpha = alpha;
-        for (let i = 0; i < 8; i++) {
+        // Reduced from 8 to 5 rays
+        for (let i = 0; i < 5; i++) {
             const angle = -0.8 + i * 0.25 + Math.sin(this.time * 0.2 + i) * 0.05;
             const len = 1200 + Math.sin(this.time * 0.5 + i) * 100;
             const w = 40 + i * 15;
@@ -662,11 +703,11 @@ class IslandRenderer {
         ctx.arc(x, y, r, 0, Math.PI * 2);
         ctx.fill();
 
-        // Animated rays
+        // Animated rays - reduced from 16 to 8
         ctx.strokeStyle = 'rgba(255, 215, 0, 0.25)';
         ctx.lineWidth = 3;
-        for (let i = 0; i < 16; i++) {
-            const angle = (i / 16) * Math.PI * 2 + this.time * 0.15;
+        for (let i = 0; i < 8; i++) {
+            const angle = (i / 8) * Math.PI * 2 + this.time * 0.15;
             const inner = r * 1.15;
             const outer = r * 1.8 + Math.sin(this.time * 2.5 + i * 0.8) * 12;
             ctx.beginPath();
@@ -680,7 +721,8 @@ class IslandRenderer {
 
     _drawClouds() {
         const ctx = this.ctx;
-        this.clouds.forEach(cloud => {
+        for (let ci = 0; ci < this.clouds.length; ci++) {
+            const cloud = this.clouds[ci];
             ctx.save();
             ctx.globalAlpha = cloud.opacity;
 
@@ -688,12 +730,6 @@ class IslandRenderer {
             const cy = cloud.y;
             const w = cloud.width;
             const h = cloud.height;
-
-            // Shadow
-            ctx.fillStyle = 'rgba(0,0,0,0.05)';
-            ctx.beginPath();
-            ctx.ellipse(cx, cy + h * 0.3, w * 0.4, h * 0.3, 0, 0, Math.PI * 2);
-            ctx.fill();
 
             // Cloud body
             ctx.fillStyle = 'rgba(255,255,255,0.95)';
@@ -706,43 +742,38 @@ class IslandRenderer {
             ctx.fill();
 
             ctx.restore();
-        });
+        }
     }
 
     _drawWater(startY) {
         const ctx = this.ctx;
 
-        // Deep water gradient
-        const waterGrad = ctx.createLinearGradient(0, startY, 0, this.height);
-        waterGrad.addColorStop(0, 'rgba(0, 119, 182, 0.6)');
-        waterGrad.addColorStop(0.3, 'rgba(0, 100, 160, 0.7)');
-        waterGrad.addColorStop(1, 'rgba(2, 62, 138, 0.85)');
-        ctx.fillStyle = waterGrad;
+        // Simplified water fill (no per-call gradient creation)
+        ctx.fillStyle = 'rgba(0, 100, 160, 0.7)';
         ctx.fillRect(0, startY, this.width, this.height - startY);
 
-        // Animated wave layers
-        this.waves.forEach(wave => {
+        // Animated wave layers - step increased from 8 to 16
+        for (let w = 0; w < this.waves.length; w++) {
+            const wave = this.waves[w];
             ctx.fillStyle = wave.color;
             ctx.beginPath();
             ctx.moveTo(0, startY + (wave.y - (this.height - 220)));
-            for (let x = 0; x <= this.width; x += 8) {
+            for (let x = 0; x <= this.width; x += 16) {
                 const y = startY + (wave.y - (this.height - 220)) +
-                    Math.sin(x * wave.frequency + this.time * wave.speed) * wave.amplitude +
-                    Math.sin(x * wave.frequency * 2.3 + this.time * wave.speed * 0.7) * wave.amplitude * 0.3;
+                    Math.sin(x * wave.frequency + this.time * wave.speed) * wave.amplitude;
                 ctx.lineTo(x, y);
             }
             ctx.lineTo(this.width, this.height);
             ctx.lineTo(0, this.height);
             ctx.fill();
-        });
+        }
 
-        // Foam/sparkle highlights on water
+        // Foam highlights - reduced from 20 to 8
         ctx.save();
-        for (let i = 0; i < 20; i++) {
-            const wx = (i * 103 + this.time * 20) % this.width;
+        for (let i = 0; i < 8; i++) {
+            const wx = (i * 250 + this.time * 20) % this.width;
             const wy = startY + 10 + (i * 17) % 60;
-            const alpha = 0.15 + Math.sin(this.time * 3 + i * 0.9) * 0.15;
-            ctx.globalAlpha = alpha;
+            ctx.globalAlpha = 0.2;
             ctx.fillStyle = '#fff';
             ctx.beginPath();
             ctx.arc(wx, wy, 2, 0, Math.PI * 2);
@@ -851,17 +882,20 @@ class IslandRenderer {
     }
 
     _drawSparkles() {
+        // Only draw every other frame, reduced from 25 to 10
+        if (this._frameCount % 2 !== 0) return;
+
         const ctx = this.ctx;
-        for (let i = 0; i < 25; i++) {
-            const x = ((i * 137 + this.time * 25) % this.width);
-            const y = ((i * 97 + this.time * 8) % (this.height * 0.5));
+        for (let i = 0; i < 10; i++) {
+            const x = ((i * 200 + this.time * 25) % this.width);
+            const y = ((i * 120 + this.time * 8) % (this.height * 0.5));
             const size = 2 + Math.sin(this.time * 3 + i) * 2;
             const alpha = 0.3 + Math.sin(this.time * 4 + i * 0.5) * 0.3;
             ctx.save();
             ctx.globalAlpha = alpha;
             ctx.fillStyle = '#ffffff';
             ctx.translate(x, y);
-            ctx.rotate(this.time + i);
+            // Removed per-sparkle rotation (expensive context transforms)
             ctx.beginPath();
             ctx.moveTo(0, -size);
             ctx.lineTo(size * 0.3, -size * 0.3);
@@ -940,24 +974,14 @@ class IslandRenderer {
         const ctx = this.ctx;
         const crystalColors = ['#8338ec', '#06d6a0', '#ef476f', '#00b4d8', '#ffd700'];
 
-        for (let i = 0; i < 18; i++) {
-            const x = (i * 117) % this.width;
-            const y = 180 + (i * 73) % (this.height - 360);
-            const h = 25 + (i * 17) % 70;
+        // Reduced from 18 to 8 crystals, removed per-crystal radial gradient glow
+        for (let i = 0; i < 8; i++) {
+            const x = (i * 250) % this.width;
+            const y = 180 + (i * 120) % (this.height - 360);
+            const h = 30 + (i * 17) % 60;
             const color = crystalColors[i % crystalColors.length];
-            const glow = 0.3 + Math.sin(this.time * 2 + i * 1.1) * 0.2;
 
-            // Crystal glow
-            ctx.save();
-            ctx.globalAlpha = glow;
-            const cGlow = ctx.createRadialGradient(x, y, 0, x, y, h * 2.5);
-            cGlow.addColorStop(0, color);
-            cGlow.addColorStop(1, 'transparent');
-            ctx.fillStyle = cGlow;
-            ctx.fillRect(x - h * 2.5, y - h * 2.5, h * 5, h * 5);
-            ctx.restore();
-
-            // Crystal body
+            // Crystal body only (removed expensive per-crystal radial gradient glow)
             ctx.save();
             ctx.globalAlpha = 0.85;
             ctx.fillStyle = color;
@@ -984,11 +1008,14 @@ class IslandRenderer {
     }
 
     _drawEmbers() {
+        // Only draw every other frame, reduced from 40 to 15
+        if (this._frameCount % 2 !== 0) return;
+
         const ctx = this.ctx;
         const colors = ['#ff6b00', '#ffd700', '#ff4500', '#ff8c00'];
-        for (let i = 0; i < 40; i++) {
-            const x = (i * 53 + this.time * 45) % this.width;
-            const y = this.height - ((i * 37 + this.time * 70) % this.height);
+        for (let i = 0; i < 15; i++) {
+            const x = (i * 133 + this.time * 45) % this.width;
+            const y = this.height - ((i * 77 + this.time * 70) % this.height);
             const size = 1.5 + (i % 4) * 1.2;
             const alpha = 0.4 + Math.sin(this.time * 5 + i) * 0.3;
             ctx.save();
@@ -996,11 +1023,6 @@ class IslandRenderer {
             ctx.fillStyle = colors[i % colors.length];
             ctx.beginPath();
             ctx.arc(x, y, size, 0, Math.PI * 2);
-            ctx.fill();
-            // Ember glow
-            ctx.globalAlpha = alpha * 0.3;
-            ctx.beginPath();
-            ctx.arc(x, y, size * 3, 0, Math.PI * 2);
             ctx.fill();
             ctx.restore();
         }
@@ -1129,14 +1151,8 @@ class IslandRenderer {
     drawIslandMap(progress) {
         const ctx = this.ctx;
 
-        // Deep ocean gradient
-        const ocean = ctx.createLinearGradient(0, 0, 0, this.height);
-        ocean.addColorStop(0, '#6dd5ed');
-        ocean.addColorStop(0.15, '#48cae4');
-        ocean.addColorStop(0.4, '#0096c7');
-        ocean.addColorStop(0.7, '#0077b6');
-        ocean.addColorStop(1, '#023e8a');
-        ctx.fillStyle = ocean;
+        // Use cached ocean gradient
+        ctx.fillStyle = this._cachedGradients.oceanMap;
         ctx.fillRect(0, 0, this.width, this.height);
 
         // Atmospheric light rays from sun
